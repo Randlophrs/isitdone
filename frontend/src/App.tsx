@@ -1,5 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
+  BrowserRouter,
   NavLink,
   Navigate,
   Route,
@@ -26,7 +27,8 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-full flex flex-col">
+      <BrowserRouter>
+        <div className="min-h-full flex flex-col">
         <header className="sticky top-0 z-10 border-b border-border bg-surface/80 backdrop-blur">
           <div className="mx-auto max-w-3xl px-4 py-3 flex items-center justify-between">
             <span className="font-semibold text-lg">isitdone</span>
@@ -71,6 +73,7 @@ export default function App() {
           </div>
         </nav>
       </div>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }

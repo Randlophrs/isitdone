@@ -43,7 +43,7 @@ def create_app() -> FastAPI:
     init_db()
 
     frontend_path = (
-        Path(__file__).resolve().parents[1] / "frontend" / "dist"
+        Path(__file__).resolve().parents[2] / "frontend" / "dist"
     )
     if frontend_path.exists():
         from fastapi.staticfiles import StaticFiles
