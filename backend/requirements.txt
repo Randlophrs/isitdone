@@ -4,3 +4,4 @@ sqlmodel>=0.0.21
 pydantic>=2.9.0
 pydantic-settings>=2.6.0
 python-multipart>=0.0.12
+tzdata>=2024.1
