@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useDashboard } from "@/features/routines/queries";
-import { useCompleteRoutine, useUncompleteRoutine } from "@/features/routines/queries";
+import { useCompleteRoutine, useUncompleteRoutine, useDeleteRoutine } from "@/features/routines/queries";
 import { useToast } from "@/hooks/use-toast";
 import { ToastHost } from "@/components/layout/Toast";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
@@ -31,6 +31,7 @@ export function DashboardPage() {
   const { data, isLoading, isError } = useDashboard();
   const complete = useCompleteRoutine();
   const uncomplete = useUncompleteRoutine();
+  const deleteRoutine = useDeleteRoutine();
   const { toasts, show, dismiss } = useToast();
   const [filter, setFilter] = useState<Filter>("all");
 
@@ -52,6 +53,12 @@ export function DashboardPage() {
           }),
       });
     }
+  };
+
+  const handleDelete = (routine: DashboardRoutine) => {
+    deleteRoutine.mutate(routine.id, {
+      onSuccess: () => show(`${routine.name} deleted`),
+    });
   };
 
   const groups = useMemo(() => {
@@ -137,6 +144,7 @@ export function DashboardPage() {
                 category={g.category}
                 routines={g.routines}
                 onToggle={toggle}
+                onDelete={handleDelete}
               />
             ))}
           </div>

@@ -5,9 +5,10 @@ interface Props {
   category: string;
   routines: DashboardRoutine[];
   onToggle: (routine: DashboardRoutine) => void;
+  onDelete: (routine: DashboardRoutine) => void;
 }
 
-export function CategoryGroup({ category, routines, onToggle }: Props) {
+export function CategoryGroup({ category, routines, onToggle, onDelete }: Props) {
   const remaining = routines.filter((r) => !r.isCompleted).length;
   return (
     <section>
@@ -21,7 +22,12 @@ export function CategoryGroup({ category, routines, onToggle }: Props) {
       </div>
       <div className="flex flex-col gap-2">
         {routines.map((r) => (
-          <RoutineRow key={r.id} routine={r} onToggle={onToggle} />
+          <RoutineRow
+            key={r.id}
+            routine={r}
+            onToggle={onToggle}
+            onDelete={onDelete}
+          />
         ))}
       </div>
     </section>
