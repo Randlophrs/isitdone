@@ -5,6 +5,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from .api import (
     backup,
@@ -46,8 +47,22 @@ def create_app() -> FastAPI:
         Path(__file__).resolve().parents[2] / "frontend" / "dist"
     )
     if frontend_path.exists():
+        # SPA fallback: serve index.html for client-side routes that are not
+        # real files (no extension) and not under /api.
+        from fastapi import APIRouter
+
         from fastapi.staticfiles import StaticFiles
 
+        spa = APIRouter()
+
+        @spa.get("/{full_path:path}")
+        def spa_index(full_path: str) -> FileResponse:
+            candidate = frontend_path / full_path
+            if "." in full_path and candidate.exists():
+                return FileResponse(str(candidate))
+            return FileResponse(str(frontend_path / "index.html"))
+
+        app.include_router(spa)
         app.mount(
             "/",
             StaticFiles(directory=str(frontend_path), html=True),
