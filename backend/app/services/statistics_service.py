@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 from ..models.completion import Completion
 from ..models.routine import Routine
 from ..services.period_service import all_period_keys_between, today_date
+from ..services.period_service import now_for_routine
 from ..utils.dates import now_in_timezone
 
 
@@ -21,10 +22,16 @@ def _completed_keys(session: Session, routine_id: str) -> set[str]:
 
 def routine_statistics(session: Session, routine: Routine) -> dict:
     completed_keys = _completed_keys(session, routine.id)
-    created = _parse_date(routine.created_at)
-    today = today_date()
+    created = _parse_date(routine.created_at, routine.timezone)
+    today = now_for_routine(routine.timezone, routine.reset_time).date()
     # Periods elapsed since creation (inclusive of creation day) up to today.
-    periods = all_period_keys_between(routine.frequency, created, today)
+    periods = all_period_keys_between(
+        routine.frequency,
+        created,
+        today,
+        weekday=routine.weekday,
+        monthweek=routine.monthweek,
+    )
     elapsed = len(periods)
     done = len(completed_keys & set(periods))
     rate = round((done / elapsed) * 100, 1) if elapsed else 0.0
@@ -91,7 +98,15 @@ def _longest_streak(periods: list[str], completed_keys: set[str]) -> int:
     return best
 
 
-def _parse_date(iso: str) -> date:
+def _parse_date(iso: str, tz: str | None = None) -> date:
     from datetime import datetime
 
-    return datetime.fromisoformat(iso).date()
+    dt = datetime.fromisoformat(iso)
+    if tz:
+        from ..services.period_service import _zone
+
+        try:
+            dt = dt.astimezone(_zone(tz))
+        except Exception:
+            pass
+    return dt.date()

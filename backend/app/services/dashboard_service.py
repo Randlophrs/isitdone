@@ -9,7 +9,7 @@ from ..models.category import Category
 from ..models.completion import Completion
 from ..models.routine import Routine
 from ..services.completion_service import is_completed
-from ..services.period_service import period_keys
+from ..services.period_service import period_key_for_routine, period_keys
 from ..services.routine_service import list_routines
 
 
@@ -26,7 +26,13 @@ def current_dashboard(session: Session) -> dict:
     completed = 0
 
     for routine in routines:
-        period_key = keys[routine.frequency]
+        period_key = period_key_for_routine(
+            routine.frequency,
+            routine.timezone,
+            routine.reset_time,
+            weekday=routine.weekday,
+            monthweek=routine.monthweek,
+        )
         done = is_completed(session, routine, period_key) is not None
         if done:
             completed += 1
@@ -42,6 +48,7 @@ def current_dashboard(session: Session) -> dict:
             "color": cat.color if cat else None,
             "icon": cat.icon if cat else None,
             "isPinned": routine.is_pinned,
+            "timezone": routine.timezone,
             "periodKey": period_key,
             "isCompleted": done,
             "completedAt": _completed_at(session, routine.id, period_key),

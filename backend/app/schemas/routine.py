@@ -10,6 +10,10 @@ class RoutineBase(BaseModel):
     description: Optional[str] = None
     category_id: Optional[str] = None
     frequency: str = "daily"
+    timezone: Optional[str] = None
+    reset_time: Optional[str] = "00:00"
+    weekday: Optional[int] = None
+    monthweek: Optional[int] = None
     is_pinned: bool = False
     sort_order: int = 0
 
@@ -33,6 +37,10 @@ class RoutineUpdate(BaseModel):
     description: Optional[str] = None
     category_id: Optional[str] = None
     frequency: Optional[str] = None
+    timezone: Optional[str] = None
+    reset_time: Optional[str] = None
+    weekday: Optional[int] = None
+    monthweek: Optional[int] = None
     is_active: Optional[bool] = None
     is_pinned: Optional[bool] = None
     sort_order: Optional[int] = None

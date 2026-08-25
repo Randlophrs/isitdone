@@ -16,6 +16,10 @@ class Routine(SQLModel, table=True):
     description: Optional[str] = None
     category_id: Optional[str] = Field(default=None, foreign_key="category.id")
     frequency: str = Field(index=True)
+    timezone: Optional[str] = Field(default=None)
+    reset_time: Optional[str] = Field(default="00:00")
+    weekday: Optional[int] = Field(default=None)
+    monthweek: Optional[int] = Field(default=None)
     is_active: bool = Field(default=True, index=True)
     is_pinned: bool = Field(default=False)
     sort_order: int = Field(default=0)

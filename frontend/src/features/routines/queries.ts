@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { Dashboard, Routine } from "@/types";
+import type { Category, Dashboard, Routine } from "@/types";
 
 export function useDashboard() {
   return useQuery({
@@ -20,6 +20,16 @@ export function useCategories() {
   return useQuery({
     queryKey: ["categories"],
     queryFn: api.listCategories,
+  });
+}
+
+export function useCreateCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<Category>) => api.createCategory(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["categories"] });
+    },
   });
 }
 

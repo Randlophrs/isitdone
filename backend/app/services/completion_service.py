@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 
 from ..models.completion import Completion
 from ..models.routine import Routine
-from ..services.period_service import period_key_for
+from ..services.period_service import period_key_for_routine
 from ..utils.ids import generate_id
 
 
@@ -29,7 +29,14 @@ def is_completed(
 def complete_routine(
     session: Session, routine: Routine, now: datetime | None = None
 ) -> Completion:
-    period_key = period_key_for(routine.frequency, now)
+    period_key = period_key_for_routine(
+        routine.frequency,
+        routine.timezone,
+        routine.reset_time,
+        now,
+        weekday=routine.weekday,
+        monthweek=routine.monthweek,
+    )
     existing = is_completed(session, routine, period_key)
     if existing:
         return existing
@@ -48,7 +55,14 @@ def complete_routine(
 def uncomplete_routine(
     session: Session, routine: Routine, now: datetime | None = None
 ) -> None:
-    period_key = period_key_for(routine.frequency, now)
+    period_key = period_key_for_routine(
+        routine.frequency,
+        routine.timezone,
+        routine.reset_time,
+        now,
+        weekday=routine.weekday,
+        monthweek=routine.monthweek,
+    )
     existing = is_completed(session, routine, period_key)
     if existing:
         session.delete(existing)

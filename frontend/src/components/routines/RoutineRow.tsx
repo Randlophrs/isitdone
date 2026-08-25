@@ -50,6 +50,17 @@ export function RoutineRow({ routine, onToggle }: Props) {
           {routine.categoryName}
           <span aria-hidden>·</span>
           {frequencyLabel(routine.frequency)}
+          {routine.resetTime && routine.resetTime !== "00:00" && (
+            <>
+              <span aria-hidden>·</span>
+              <span
+                className="rounded bg-accent/10 px-1 py-0.5 text-[10px] text-accent"
+                title={`Resets at ${routine.resetTime}`}
+              >
+                ↻ {routine.resetTime}
+              </span>
+            </>
+          )}
           {done && routine.completedAt && (
             <>
               <span aria-hidden>·</span>

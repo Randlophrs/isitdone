@@ -14,6 +14,10 @@ export interface Routine {
   description: string | null;
   categoryId: string | null;
   frequency: Frequency;
+  timezone: string | null;
+  resetTime: string | null;
+  weekday: number | null;
+  monthweek: number | null;
   isActive: boolean;
   isPinned: boolean;
   sortOrder: number;
@@ -39,6 +43,8 @@ export interface DashboardRoutine {
   color: string | null;
   icon: string | null;
   isPinned: boolean;
+  timezone: string | null;
+  resetTime: string | null;
   periodKey: string;
   isCompleted: boolean;
   completedAt: string | null;
