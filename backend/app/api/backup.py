@@ -4,11 +4,11 @@ import json
 import os
 import tempfile
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
 
 from ..dependencies import SessionDep
-from ..schemas.backup import BackupImportRequest, BackupImportResponse
+from ..schemas.backup import BackupImportResponse
 from ..services import backup_service
 
 router = APIRouter(prefix="/api/backup", tags=["backup"])
@@ -22,7 +22,9 @@ def export_backup(session: SessionDep) -> JSONResponse:
 
 @router.post("/import", response_model=BackupImportResponse)
 async def import_backup(
-    session: SessionDep, file: UploadFile = File(...), mode: str = "merge"
+    session: SessionDep,
+    file: UploadFile = File(...),
+    mode: str = Form("merge"),
 ) -> BackupImportResponse:
     if mode not in ("merge", "replace"):
         raise HTTPException(
