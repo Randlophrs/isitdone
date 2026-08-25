@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from ..config import settings
 from ..utils.dates import now_in_timezone
@@ -70,3 +70,41 @@ def format_date_label(now: datetime | None = None) -> str:
 def today_date(now: datetime | None = None) -> date:
     now = now or now_in_timezone()
     return now.date()
+
+
+def all_period_keys_between(frequency: str, start: date, end: date) -> list[str]:
+    """Inclusive list of period keys from start date to end date."""
+    keys: list[str] = []
+    cursor = start
+    while cursor <= end:
+        if frequency == "monthly":
+            keys.append(cursor.strftime("%Y-%m"))
+            # advance to first day of next month
+            if cursor.month == 12:
+                cursor = cursor.replace(year=cursor.year + 1, month=1, day=1)
+            else:
+                cursor = cursor.replace(month=cursor.month + 1, day=1)
+        elif frequency == "weekly":
+            keys.append(weekly_key_for_date(cursor))
+            cursor = cursor + timedelta(days=7)
+        else:  # daily
+            keys.append(cursor.strftime("%Y-%m-%d"))
+            cursor = cursor + timedelta(days=1)
+    # dedupe (weekly/monthly boundaries can repeat)
+    seen = set()
+    out = []
+    for k in keys:
+        if k not in seen:
+            seen.add(k)
+            out.append(k)
+    return out
+
+
+def weekly_key_for_date(d: date) -> str:
+    """Weekly key for an explicit calendar date (keeps week-start config)."""
+    if week_starts_on() == 6:  # Sunday-start
+        ref = d + timedelta(days=1)
+    else:
+        ref = d
+    iso_year, iso_week, _ = ref.isocalendar()
+    return f"{iso_year}-W{iso_week:02d}"

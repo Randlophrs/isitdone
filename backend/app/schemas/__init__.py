@@ -1,3 +1,4 @@
+from .backup import BackupImportRequest, BackupImportResponse
 from .category import CategoryCreate, CategoryRead, CategoryUpdate
 from .completion import CompletionRead
 from .routine import (
@@ -7,6 +8,8 @@ from .routine import (
 )
 
 __all__ = [
+    "BackupImportRequest",
+    "BackupImportResponse",
     "CategoryCreate",
     "CategoryRead",
     "CategoryUpdate",
