@@ -49,6 +49,8 @@ def current_dashboard(session: Session) -> dict:
             "icon": cat.icon if cat else None,
             "isPinned": routine.is_pinned,
             "timezone": routine.timezone,
+            "weekday": routine.weekday,
+            "monthweek": routine.monthweek,
             "periodKey": period_key,
             "isCompleted": done,
             "completedAt": _completed_at(session, routine.id, period_key),

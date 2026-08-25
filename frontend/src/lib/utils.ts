@@ -27,3 +27,33 @@ export function formatTime(iso: string | null): string {
 export function frequencyLabel(f: string): string {
   return f.charAt(0).toUpperCase() + f.slice(1);
 }
+
+const WEEKDAYS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
+/** Human-readable description of *when* a routine recurs within its period. */
+export function scheduleLabel(
+  frequency: string,
+  weekday: number | null,
+  monthweek: number | null,
+): string {
+  if (frequency === "weekly" && weekday !== null && weekday >= 0 && weekday <= 6) {
+    return `Every ${WEEKDAYS[weekday]}`;
+  }
+  if (frequency === "monthly" && monthweek !== null && monthweek >= 1 && monthweek <= 5) {
+    const ord = ["1st", "2nd", "3rd", "4th", "5th"][monthweek - 1] ?? `${monthweek}th`;
+    const day =
+      weekday !== null && weekday >= 0 && weekday <= 6
+        ? ` ${WEEKDAYS[weekday]}`
+        : "";
+    return `Every ${ord} week${day}`;
+  }
+  return "";
+}

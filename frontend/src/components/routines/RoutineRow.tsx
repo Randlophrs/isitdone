@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import type { DashboardRoutine } from "@/types";
-import { cx, formatTime, frequencyLabel } from "@/lib/utils";
+import { cx, formatTime, frequencyLabel, scheduleLabel } from "@/lib/utils";
 
 interface Props {
   routine: DashboardRoutine;
@@ -11,6 +11,7 @@ interface Props {
 
 export function RoutineRow({ routine, onToggle, onDelete }: Props) {
   const done = routine.isCompleted;
+  const schedule = scheduleLabel(routine.frequency, routine.weekday, routine.monthweek);
   const [confirming, setConfirming] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -74,17 +75,13 @@ export function RoutineRow({ routine, onToggle, onDelete }: Props) {
             {routine.categoryName}
             <span aria-hidden>·</span>
             {frequencyLabel(routine.frequency)}
-            {routine.resetTime && routine.resetTime !== "00:00" && (
-              <>
-                <span aria-hidden>·</span>
-                <span
-                  className="rounded bg-accent/10 px-1 py-0.5 text-[10px] text-accent"
-                  title={`Resets at ${routine.resetTime}`}
-                >
-                  ↻ {routine.resetTime}
-                </span>
-              </>
-            )}
+            <span aria-hidden>·</span>
+            <span
+              className="rounded bg-accent/10 px-1 py-0.5 text-[10px] font-medium text-accent"
+              title={`Resets at ${routine.resetTime ?? "00:00"}`}
+            >
+              {routine.resetTime ?? "00:00"}
+            </span>
             {done && routine.completedAt && (
               <>
                 <span aria-hidden>·</span>
@@ -92,6 +89,12 @@ export function RoutineRow({ routine, onToggle, onDelete }: Props) {
               </>
             )}
           </span>
+
+          {schedule && (
+            <span className="mt-0.5 block text-[11px] text-muted/80">
+              {schedule}
+            </span>
+          )}
         </span>
 
         {routine.isPinned && (

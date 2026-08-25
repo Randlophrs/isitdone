@@ -44,6 +44,8 @@ export interface DashboardRoutine {
   icon: string | null;
   isPinned: boolean;
   timezone: string | null;
+  weekday: number | null;
+  monthweek: number | null;
   resetTime: string | null;
   periodKey: string;
   isCompleted: boolean;
