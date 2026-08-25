@@ -6,6 +6,7 @@ from typing import Optional
 from sqlmodel import Session, select
 
 from ..models.category import Category
+from ..models.routine import Routine
 from ..schemas.category import CategoryCreate, CategoryUpdate
 from ..utils.ids import generate_id
 
@@ -49,5 +50,20 @@ def update_category(
 
 
 def delete_category(session: Session, category: Category) -> None:
+    # Detach routines first so they become Uncategorized rather than orphaned.
+    routines = session.exec(
+        select(Routine).where(Routine.category_id == category.id)
+    ).all()
+    for r in routines:
+        r.category_id = None
+        session.add(r)
     session.delete(category)
     session.commit()
+
+
+def count_routines_using(session: Session, category_id: str) -> int:
+    return len(
+        session.exec(
+            select(Routine.id).where(Routine.category_id == category_id)
+        ).all()
+    )

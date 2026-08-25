@@ -25,7 +25,41 @@ engine = get_engine()
 def init_db() -> None:
     """Create tables from SQLModel metadata, then run SQL migrations."""
     SQLModel.metadata.create_all(engine)
+    _repair_legacy_schema()
     _run_sql_migrations()
+
+
+def _repair_legacy_schema() -> None:
+    """Fix dev DBs created before migrations used correct (singular) tables.
+
+    Early migrations targeted plural table names (routines/completions/...),
+    which SQLModel never reads — creating orphan tables and leaving the real
+    `routine` table without added columns. Drop the orphans and make sure the
+    real table has every column the model expects. Idempotent.
+    """
+    with _raw_conn() as conn:
+        tables = {
+            r[0]
+            for r in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ).fetchall()
+        }
+        orphans = {"routines", "completions", "categories", "settings"} & tables
+        for o in orphans:
+            conn.execute(f"DROP TABLE IF EXISTS {o}")
+        cols = {
+            r[1]
+            for r in conn.execute("PRAGMA table_info(routine)").fetchall()
+        }
+        for col, ddl in (
+            ("timezone", "TEXT"),
+            ("reset_time", "TEXT DEFAULT '00:00'"),
+            ("weekday", "INTEGER"),
+            ("monthweek", "INTEGER"),
+        ):
+            if col not in cols:
+                conn.execute(f"ALTER TABLE routine ADD COLUMN {col} {ddl}")
+        conn.commit()
 
 
 def _run_sql_migrations() -> None:
@@ -64,9 +98,26 @@ def _mark_migration(name: str) -> None:
 
 
 def _exec_script(script: str) -> None:
+    """Run a migration script statement-by-statement.
+
+    `ALTER TABLE ... ADD COLUMN` is treated as idempotent: if the column
+    already exists (e.g. created by SQLModel's create_all), the duplicate
+    error is ignored rather than failing the run.
+    """
     with _raw_conn() as conn:
-        conn.executescript(script)
+        for stmt in _split_statements(script):
+            try:
+                conn.execute(stmt)
+            except sqlite3.OperationalError as e:
+                if "duplicate column name" in str(e).lower():
+                    continue
+                raise
         conn.commit()
+
+
+def _split_statements(script: str) -> list[str]:
+    parts = [p.strip() for p in script.split(";") if p.strip()]
+    return [f"{p};" if not p.endswith(";") else p for p in parts]
 
 
 def _raw_conn() -> sqlite3.Connection:

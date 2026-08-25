@@ -33,6 +33,26 @@ export function useCreateCategory() {
   });
 }
 
+export function useDeleteCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteCategory(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["categories"] });
+      qc.invalidateQueries({ queryKey: ["routines"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useCategoryUsage(id: string | null) {
+  return useQuery({
+    queryKey: ["category-usage", id],
+    queryFn: () => api.categoryUsage(id as string),
+    enabled: !!id,
+  });
+}
+
 export function useCompleteRoutine() {
   const qc = useQueryClient();
   return useMutation({

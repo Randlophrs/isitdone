@@ -12,7 +12,7 @@ def test_create_routine(client):
     body = r.json()
     assert body["name"] == "Duolingo"
     assert body["frequency"] == "daily"
-    assert body["is_active"] is True
+    assert body["isActive"] is True
 
 
 def test_invalid_frequency_rejected(client):

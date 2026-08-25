@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from .common import BaseSchema
 
 
-class CategoryBase(BaseModel):
+class CategoryBase(BaseSchema):
     name: str
     color: Optional[str] = None
     icon: Optional[str] = None
@@ -15,8 +15,8 @@ class CategoryCreate(CategoryBase):
     pass
 
 
-class CategoryUpdate(BaseModel):
-    model_config = ConfigDict(extra="ignore")
+class CategoryUpdate(BaseSchema):
+    model_config = BaseSchema.model_config | {"extra": "ignore"}
 
     name: Optional[str] = None
     color: Optional[str] = None
@@ -24,7 +24,5 @@ class CategoryUpdate(BaseModel):
 
 
 class CategoryRead(CategoryBase):
-    model_config = ConfigDict(from_attributes=True)
-
     id: str
     created_at: str

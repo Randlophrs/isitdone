@@ -66,6 +66,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  deleteCategory: (id: string) =>
+    request<void>(`/categories/${id}`, { method: "DELETE" }),
+  categoryUsage: (id: string) =>
+    request<{ count: number }>(`/categories/${id}/usage`),
 
   // statistics
   overallStats: () => request<OverallStats>("/statistics"),

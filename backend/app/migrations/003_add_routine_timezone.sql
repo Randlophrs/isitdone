@@ -1,2 +1,2 @@
-ALTER TABLE routines
+ALTER TABLE routine
     ADD COLUMN timezone TEXT;

@@ -5,7 +5,8 @@ import {
   useCategories,
   useCreateCategory,
 } from "@/features/routines/queries";
-import type { Category, Frequency, Routine } from "@/types";
+import { CategorySelect } from "@/components/routines/CategorySelect";
+import type { Frequency, Routine } from "@/types";
 import { formatTzNow } from "@/lib/timezones";
 
 const FREQUENCIES: Frequency[] = ["daily", "weekly", "monthly"];
@@ -31,10 +32,6 @@ export function QuickAdd() {
   const [resetTime, setResetTime] = useState<string>("00:00");
   const [nowPreview, setNowPreview] = useState<string>("");
 
-  const [catOpen, setCatOpen] = useState(false);
-  const [catName, setCatName] = useState("");
-  const [catColor, setCatColor] = useState("#6366f1");
-
   const create = useCreateRoutine();
   const { data: categories = [] } = useCategories();
   const createCategory = useCreateCategory();
@@ -53,9 +50,6 @@ export function QuickAdd() {
     setMonthweek(1);
     setCategoryId("");
     setResetTime("00:00");
-    setCatOpen(false);
-    setCatName("");
-    setCatColor("#6366f1");
     setOpen(false);
   }
 
@@ -74,20 +68,8 @@ export function QuickAdd() {
     create.mutate(payload, { onSuccess: () => reset() });
   }
 
-  function submitCategory(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = catName.trim();
-    if (!trimmed) return;
-    createCategory.mutate(
-      { name: trimmed, color: catColor },
-      {
-        onSuccess: (cat: Category) => {
-          setCategoryId(cat.id);
-          setCatOpen(false);
-          setCatName("");
-        },
-      },
-    );
+  function handleCreateCategory(name: string) {
+    return createCategory.mutateAsync({ name });
   }
 
   if (!open) {
@@ -111,58 +93,12 @@ export function QuickAdd() {
 
       {/* Category */}
       <Section icon={<Tag size={13} />} label="Category">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <select
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full appearance-none rounded-lg border border-border bg-bg py-2 pl-3 pr-9 text-sm outline-none focus:border-accent"
-            >
-              <option value="">Uncategorized</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={14}
-              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
-            />
-          </div>
-          <button
-            type="button"
-            className="btn-ghost"
-            onClick={() => setCatOpen((v) => !v)}
-          >
-            {catOpen ? "Cancel" : "+ New"}
-          </button>
-        </div>
-
-        {catOpen && (
-          <form
-            onSubmit={submitCategory}
-            className="mt-2 flex items-center gap-2 rounded-lg border border-border bg-bg p-2"
-          >
-            <input
-              value={catName}
-              onChange={(e) => setCatName(e.target.value)}
-              placeholder="Category name"
-              className="flex-1 rounded-md border border-border bg-bg px-2 py-1.5 text-sm outline-none focus:border-accent"
-            />
-            <input
-              type="color"
-              value={catColor}
-              onChange={(e) => setCatColor(e.target.value)}
-              className="h-8 w-8 flex-none cursor-pointer rounded-md border border-border bg-bg"
-              title="Category color"
-              aria-label="Category color"
-            />
-            <button type="submit" className="btn-accent flex-none">
-              Add
-            </button>
-          </form>
-        )}
+        <CategorySelect
+          categories={categories}
+          value={categoryId || null}
+          onChange={(id) => setCategoryId(id ?? "")}
+          onCreate={handleCreateCategory}
+        />
       </Section>
 
       {/* Repeat */}

@@ -47,3 +47,9 @@ def update_category(session: SessionDep, category_id: str, data: CategoryUpdate)
 def delete_category(session: SessionDep, category_id: str):
     category = _get_or_404(session, category_id)
     category_service.delete_category(session, category)
+
+
+@router.get("/{category_id}/usage")
+def category_usage(session: SessionDep, category_id: str):
+    _get_or_404(session, category_id)
+    return {"count": category_service.count_routines_using(session, category_id)}

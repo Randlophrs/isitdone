@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS routines (
+CREATE TABLE IF NOT EXISTS routine (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
@@ -12,23 +12,23 @@ CREATE TABLE IF NOT EXISTS routines (
     updated_at TEXT NOT NULL,
     archived_at TEXT,
     FOREIGN KEY (category_id)
-        REFERENCES categories(id)
+        REFERENCES category(id)
         ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS completions (
+CREATE TABLE IF NOT EXISTS completion (
     id TEXT PRIMARY KEY,
     routine_id TEXT NOT NULL,
     period_key TEXT NOT NULL,
     completed_at TEXT NOT NULL,
     FOREIGN KEY (routine_id)
-        REFERENCES routines(id)
+        REFERENCES routine(id)
         ON DELETE CASCADE,
     UNIQUE (routine_id, period_key)
 );
 
-CREATE INDEX IF NOT EXISTS idx_completions_routine_id
-    ON completions(routine_id);
+CREATE INDEX IF NOT EXISTS idx_completion_routine_id
+    ON completion(routine_id);
 
-CREATE INDEX IF NOT EXISTS idx_completions_period_key
-    ON completions(period_key);
+CREATE INDEX IF NOT EXISTS idx_completion_period_key
+    ON completion(period_key);

@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import field_validator
+
+from .common import BaseSchema
 
 
-class RoutineBase(BaseModel):
+class RoutineBase(BaseSchema):
     name: str
     description: Optional[str] = None
     category_id: Optional[str] = None
@@ -30,8 +32,8 @@ class RoutineCreate(RoutineBase):
     pass
 
 
-class RoutineUpdate(BaseModel):
-    model_config = ConfigDict(extra="ignore")
+class RoutineUpdate(BaseSchema):
+    model_config = BaseSchema.model_config | {"extra": "ignore"}
 
     name: Optional[str] = None
     description: Optional[str] = None
@@ -57,8 +59,6 @@ class RoutineUpdate(BaseModel):
 
 
 class RoutineRead(RoutineBase):
-    model_config = ConfigDict(from_attributes=True)
-
     id: str
     is_active: bool
     created_at: str
