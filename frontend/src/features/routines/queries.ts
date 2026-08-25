@@ -110,7 +110,10 @@ export function useDeleteRoutine() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.deleteRoutine(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["routines"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["routines"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
   });
 }
 
