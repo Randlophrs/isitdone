@@ -66,7 +66,7 @@ export function QuickAdd({ open, onClose }: Props) {
       name: trimmed,
       frequency,
       resetTime: resetTime || "00:00",
-      weekday: frequency === "weekly" ? weekday : null,
+      weekday: frequency === "weekly" || frequency === "monthly" ? weekday : null,
       monthweek: frequency === "monthly" ? monthweek : null,
     };
     if (categoryId) payload.categoryId = categoryId;

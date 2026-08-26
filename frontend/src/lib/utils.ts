@@ -38,22 +38,26 @@ const WEEKDAYS = [
   "Sunday",
 ];
 
-/** Human-readable description of *when* a routine recurs within its period. */
-export function scheduleLabel(
+/** Compact schedule tokens for the card meta line (day, or "Nth week · day"). */
+export function compactSchedule(
   frequency: string,
   weekday: number | null,
   monthweek: number | null,
 ): string {
   if (frequency === "weekly" && weekday !== null && weekday >= 0 && weekday <= 6) {
-    return `Every ${WEEKDAYS[weekday]}`;
+    return WEEKDAYS[weekday];
   }
-  if (frequency === "monthly" && monthweek !== null && monthweek >= 1 && monthweek <= 5) {
+  if (
+    frequency === "monthly" &&
+    monthweek !== null &&
+    monthweek >= 1 &&
+    monthweek <= 5 &&
+    weekday !== null &&
+    weekday >= 0 &&
+    weekday <= 6
+  ) {
     const ord = ["1st", "2nd", "3rd", "4th", "5th"][monthweek - 1] ?? `${monthweek}th`;
-    const day =
-      weekday !== null && weekday >= 0 && weekday <= 6
-        ? ` ${WEEKDAYS[weekday]}`
-        : "";
-    return `Every ${ord} week${day}`;
+    return `${ord} week · ${WEEKDAYS[weekday]}`;
   }
   return "";
 }
