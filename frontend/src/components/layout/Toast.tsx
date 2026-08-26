@@ -9,25 +9,33 @@ export function ToastHost({
 }) {
   if (toasts.length === 0) return null;
   return (
-    <div className="fixed inset-x-0 bottom-20 z-50 mx-auto flex max-w-md flex-col gap-2 px-4">
+    <div className="fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-2">
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="card flex items-center justify-between gap-3 px-4 py-3 shadow-lg"
+          className="card overflow-hidden shadow-lg [animation:toast-in_0.2s_ease-out]"
           role="status"
         >
-          <span className="text-sm">{t.message}</span>
-          {t.actionLabel && (
-            <button
-              className="text-sm font-semibold text-accent"
-              onClick={() => {
-                t.onAction?.();
-                onDismiss(t.id);
-              }}
-            >
-              {t.actionLabel}
-            </button>
-          )}
+          <div className="flex items-center justify-between gap-3 px-3 py-2">
+            <span className="text-sm">{t.message}</span>
+            {t.actionLabel && (
+              <button
+                className="shrink-0 text-sm font-semibold text-accent"
+                onClick={() => {
+                  t.onAction?.();
+                  onDismiss(t.id);
+                }}
+              >
+                {t.actionLabel}
+              </button>
+            )}
+          </div>
+          <div className="h-0.5 w-full bg-accent/15">
+            <div
+              className="h-full origin-left bg-accent [animation:toast-countdown_3s_linear_forwards]"
+              onAnimationEnd={() => onDismiss(t.id)}
+            />
+          </div>
         </div>
       ))}
     </div>

@@ -19,11 +19,15 @@ export function useToast() {
   const show = useCallback(
     (message: string, opts?: { actionLabel?: string; onAction?: () => void }) => {
       const id = ++counter;
-      setToasts((t) => [
-        ...t,
-        { id, message, actionLabel: opts?.actionLabel, onAction: opts?.onAction },
-      ]);
-      setTimeout(() => dismiss(id), 5000);
+      setToasts((t) => {
+        const next = [
+          ...t,
+          { id, message, actionLabel: opts?.actionLabel, onAction: opts?.onAction },
+        ];
+        // ponytail: keep latest 3 only, FIFO drop
+        return next.slice(-3);
+      });
+      setTimeout(() => dismiss(id), 3000);
     },
     [dismiss],
   );
