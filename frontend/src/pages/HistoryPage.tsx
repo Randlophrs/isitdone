@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Check, X } from "lucide-react";
 import { useHistoryMonth } from "@/features/history/queries";
+import { Modal } from "@/components/layout/Modal";
 import { cx } from "@/lib/utils";
 
 const MONTHS = [
@@ -122,55 +123,49 @@ export function HistoryPage() {
         </>
       )}
 
-      {dayDetail && (
-        <div
-          className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-4 sm:items-center [animation:fade-in_0.15s_ease-out]"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Routines on ${MONTHS[month - 1]} ${dayDetail.day}`}
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setSelected(null);
-          }}
-        >
-          <div className="card w-full max-w-md overflow-hidden [animation:sheet-up_0.2s_ease-out]">
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <div>
-                <h2 className="text-sm font-semibold">
-                  {MONTHS[month - 1]} {dayDetail.day}
-                </h2>
-                <p className="text-xs text-muted">
-                  {dayDetail.items.length} {dayDetail.items.length === 1 ? "routine" : "routines"} completed
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn-ghost -mr-2 -mt-1 p-1.5"
-                onClick={() => setSelected(null)}
-                aria-label="Close"
-              >
-                <X size={18} />
-              </button>
+      <Modal
+        open={dayDetail !== null}
+        onClose={() => setSelected(null)}
+        label={`Routines on ${MONTHS[month - 1]} ${dayDetail?.day ?? ""}`}
+      >
+        <div className="card w-full max-w-md overflow-hidden [animation:sheet-up_0.2s_ease-out]">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <div>
+              <h2 className="text-sm font-semibold">
+                {MONTHS[month - 1]} {dayDetail?.day}
+              </h2>
+              <p className="text-xs text-muted">
+                {dayDetail?.items.length} {dayDetail?.items.length === 1 ? "routine" : "routines"} completed
+              </p>
             </div>
-
-            <ul className="max-h-[60vh] divide-y divide-border overflow-y-auto">
-              {dayDetail.items.map((it, idx) => (
-                <li
-                  key={idx}
-                  className="flex items-center gap-3 px-4 py-3"
-                >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
-                    <Check size={15} />
-                  </span>
-                  <span className="flex-1 text-sm">{it.name}</span>
-                  <span className="rounded-md bg-bg px-2 py-0.5 font-mono text-xs text-muted">
-                    {it.time}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <button
+              type="button"
+              className="btn-ghost -mr-2 -mt-1 p-1.5"
+              onClick={() => setSelected(null)}
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
           </div>
+
+          <ul className="max-h-[60vh] divide-y divide-border overflow-y-auto">
+            {dayDetail?.items.map((it, idx) => (
+              <li
+                key={idx}
+                className="flex items-center gap-3 px-4 py-3"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+                  <Check size={15} />
+                </span>
+                <span className="flex-1 text-sm">{it.name}</span>
+                <span className="rounded-md bg-bg px-2 py-0.5 font-mono text-xs text-muted">
+                  {it.time}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

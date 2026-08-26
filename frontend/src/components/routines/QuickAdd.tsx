@@ -8,6 +8,7 @@ import {
 import { CategorySelect } from "@/components/routines/CategorySelect";
 import type { Frequency, Routine } from "@/types";
 import { formatTzNow } from "@/lib/timezones";
+import { Modal } from "@/components/layout/Modal";
 import { cx } from "@/lib/utils";
 
 const FREQUENCIES: Frequency[] = ["daily", "weekly", "monthly"];
@@ -80,15 +81,7 @@ export function QuickAdd({ open, onClose }: Props) {
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-4 sm:items-center"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Add routine"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <Modal open={open} onClose={onClose} label="Add routine">
       <form
         onSubmit={submit}
         className="card max-h-[88vh] w-full max-w-md space-y-4 overflow-y-auto p-4"
@@ -246,7 +239,7 @@ export function QuickAdd({ open, onClose }: Props) {
           </button>
         </div>
       </form>
-    </div>
+    </Modal>
   );
 }
 

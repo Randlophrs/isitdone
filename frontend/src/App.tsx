@@ -29,7 +29,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <div className="min-h-full flex flex-col">
-        <header className="sticky top-0 z-10 border-b border-border bg-surface/80 backdrop-blur">
+        <header className="sticky top-0 z-10 border-b border-border bg-surface">
           <div className="mx-auto max-w-3xl px-4 py-3 flex items-center justify-between">
             <span className="font-semibold text-lg">isitdone</span>
             <button
@@ -52,7 +52,7 @@ export default function App() {
           </Routes>
         </main>
 
-        <nav className="sticky bottom-0 border-t border-border bg-surface/90 backdrop-blur">
+        <nav className="sticky bottom-0 z-10 border-t border-border bg-surface">
           <div className="mx-auto max-w-3xl grid grid-cols-4">
             {navItems.map(({ to, label, icon: Icon, end }) => (
               <NavLink
