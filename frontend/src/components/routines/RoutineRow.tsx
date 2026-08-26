@@ -34,13 +34,13 @@ export function RoutineRow({ routine, onToggle, onDelete }: Props) {
   }, [confirming]);
 
   return (
-    <div ref={rootRef} className="group relative">
+    <div ref={rootRef} className="group relative h-full">
       <button
         type="button"
         onClick={() => onToggle(routine)}
         aria-pressed={done}
         className={cx(
-          "flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-3 pr-10 text-left transition-colors",
+          "flex h-full w-full items-start gap-3 rounded-xl border border-border bg-surface px-3 py-3 pr-10 text-left transition-colors",
           "hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
           done && "opacity-60",
         )}
