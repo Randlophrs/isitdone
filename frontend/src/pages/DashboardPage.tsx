@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import { useDashboard } from "@/features/routines/queries";
 import { useCompleteRoutine, useUncompleteRoutine, useDeleteRoutine } from "@/features/routines/queries";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +35,7 @@ export function DashboardPage() {
   const deleteRoutine = useDeleteRoutine();
   const { toasts, show, dismiss } = useToast();
   const [filter, setFilter] = useState<Filter>("all");
+  const [adding, setAdding] = useState(false);
 
   const toggle = (routine: DashboardRoutine) => {
     if (routine.isCompleted) {
@@ -91,12 +93,21 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-4 pb-4">
-      <header className="flex items-end justify-between">
+      <header className="flex items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">{greeting()} 👋</h1>
           <p className="text-sm text-muted">{dateLabel()}</p>
         </div>
-        <ConnectionStatus />
+        <div className="flex items-center gap-2">
+          <ConnectionStatus />
+          <button
+            type="button"
+            className="btn-accent"
+            onClick={() => setAdding(true)}
+          >
+            <Plus size={18} /> Add
+          </button>
+        </div>
       </header>
 
       {isLoading || !data ? (
@@ -108,8 +119,6 @@ export function DashboardPage() {
             total={data.progress.total}
             percentage={data.progress.percentage}
           />
-
-          <QuickAdd />
 
           {data.progress.total === 0 ? (
             <div className="card p-6 text-center">
@@ -162,6 +171,8 @@ export function DashboardPage() {
       )}
 
       <ToastHost toasts={toasts} onDismiss={dismiss} />
+
+      <QuickAdd open={adding} onClose={() => setAdding(false)} />
     </div>
   );
 }

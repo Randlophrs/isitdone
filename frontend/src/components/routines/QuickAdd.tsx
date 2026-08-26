@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Tag, Clock, ChevronDown, Repeat } from "lucide-react";
+import { Tag, Clock, ChevronDown, Repeat, X } from "lucide-react";
 import {
   useCreateRoutine,
   useCategories,
@@ -8,6 +8,7 @@ import {
 import { CategorySelect } from "@/components/routines/CategorySelect";
 import type { Frequency, Routine } from "@/types";
 import { formatTzNow } from "@/lib/timezones";
+import { cx } from "@/lib/utils";
 
 const FREQUENCIES: Frequency[] = ["daily", "weekly", "monthly"];
 const WEEKDAYS = [
@@ -22,8 +23,12 @@ const WEEKDAYS = [
 // week-of-month options (1=first … 5=last)
 const MONTH_WEEKS = [1, 2, 3, 4, 5];
 
-export function QuickAdd() {
-  const [open, setOpen] = useState(false);
+interface Props {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function QuickAdd({ open, onClose }: Props) {
   const [name, setName] = useState("");
   const [frequency, setFrequency] = useState<Frequency>("daily");
   const [weekday, setWeekday] = useState<number>(0);
@@ -50,7 +55,7 @@ export function QuickAdd() {
     setMonthweek(1);
     setCategoryId("");
     setResetTime("00:00");
-    setOpen(false);
+    onClose();
   }
 
   function submit(e: React.FormEvent) {
@@ -72,114 +77,81 @@ export function QuickAdd() {
     return createCategory.mutateAsync({ name });
   }
 
-  if (!open) {
-    return (
-      <button className="btn-accent w-full" onClick={() => setOpen(true)}>
-        <Plus size={18} /> Add routine
-      </button>
-    );
-  }
+  if (!open) return null;
 
   return (
-    <form onSubmit={submit} className="card space-y-4 p-3">
-      {/* Name */}
-      <input
-        autoFocus
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Routine name"
-        className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
-      />
-
-      {/* Category */}
-      <Section icon={<Tag size={13} />} label="Category">
-        <CategorySelect
-          categories={categories}
-          value={categoryId || null}
-          onChange={(id) => setCategoryId(id ?? "")}
-          onCreate={handleCreateCategory}
-        />
-      </Section>
-
-      {/* Repeat */}
-      <Section icon={<Repeat size={13} />} label="Repeat">
-        <div className="flex gap-2">
-          {FREQUENCIES.map((f) => (
-            <button
-              type="button"
-              key={f}
-              onClick={() => setFrequency(f)}
-              className={
-                "flex-1 rounded-lg border px-2 py-1.5 text-xs capitalize transition-colors " +
-                (frequency === f
-                  ? "border-accent bg-accent/10 text-accent"
-                  : "border-border text-muted")
-              }
-            >
-              {f}
-            </button>
-          ))}
+    <div
+      className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Add routine"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <form
+        onSubmit={submit}
+        className="card max-h-[88vh] w-full max-w-md space-y-4 overflow-y-auto p-4"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold">New routine</h2>
+          <button
+            type="button"
+            className="btn-ghost -mr-2 -mt-1 p-1.5"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        {/* Contextual schedule */}
-        {frequency === "weekly" && (
-          <div className="mt-2">
-            <p className="mb-1 text-xs text-muted">Reset every</p>
-            <div className="relative">
-              <select
-                value={weekday}
-                onChange={(e) =>
-                  setWeekday(Number(e.target.value))
-                }
-                className="w-full appearance-none rounded-lg border border-border bg-bg py-2 pl-3 pr-9 text-sm outline-none focus:border-accent"
-              >
-                {WEEKDAYS.map((w, i) => (
-                  <option key={w} value={i}>
-                    {w}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={14}
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
-              />
-            </div>
-          </div>
-        )}
+        {/* Name */}
+        <input
+          autoFocus
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Routine name"
+          className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
+        />
 
-        {frequency === "monthly" && (
-          <div className="mt-2 space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <select
-                  value={monthweek}
-                  onChange={(e) =>
-                    setMonthweek(
-                      Number(e.target.value),
-                    )
-                  }
-                  className="w-full appearance-none rounded-lg border border-border bg-bg py-2 pl-3 pr-9 text-sm outline-none focus:border-accent"
-                >
-                  {MONTH_WEEKS.map((w) => (
-                    <option key={w} value={w}>
-                      {w === 5 ? "Last week" : `Week ${w}`}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={14}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
-                />
-              </div>
-              <span className="text-xs text-muted">on</span>
-              <div className="relative flex-1">
+        {/* Category */}
+        <Section icon={<Tag size={13} />} label="Category">
+          <CategorySelect
+            categories={categories}
+            value={categoryId || null}
+            onChange={(id) => setCategoryId(id ?? "")}
+            onCreate={handleCreateCategory}
+          />
+        </Section>
+
+        {/* Repeat */}
+        <Section icon={<Repeat size={13} />} label="Repeat">
+          <div className="flex gap-2">
+            {FREQUENCIES.map((f) => (
+              <button
+                type="button"
+                key={f}
+                onClick={() => setFrequency(f)}
+                className={cx(
+                  "flex-1 rounded-lg border px-2 py-1.5 text-xs capitalize transition-colors",
+                  frequency === f
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-border text-muted",
+                )}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+
+          {/* Contextual schedule */}
+          {frequency === "weekly" && (
+            <div className="mt-2">
+              <p className="mb-1 text-xs text-muted">Reset every</p>
+              <div className="relative">
                 <select
                   value={weekday}
-                  onChange={(e) =>
-                    setWeekday(
-                      Number(e.target.value),
-                    )
-                  }
+                  onChange={(e) => setWeekday(Number(e.target.value))}
                   className="w-full appearance-none rounded-lg border border-border bg-bg py-2 pl-3 pr-9 text-sm outline-none focus:border-accent"
                 >
                   {WEEKDAYS.map((w, i) => (
@@ -194,45 +166,87 @@ export function QuickAdd() {
                 />
               </div>
             </div>
+          )}
+
+          {frequency === "monthly" && (
+            <div className="mt-2 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <select
+                    value={monthweek}
+                    onChange={(e) => setMonthweek(Number(e.target.value))}
+                    className="w-full appearance-none rounded-lg border border-border bg-bg py-2 pl-3 pr-9 text-sm outline-none focus:border-accent"
+                  >
+                    {MONTH_WEEKS.map((w) => (
+                      <option key={w} value={w}>
+                        {w === 5 ? "Last week" : `Week ${w}`}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={14}
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
+                  />
+                </div>
+                <span className="text-xs text-muted">on</span>
+                <div className="relative flex-1">
+                  <select
+                    value={weekday}
+                    onChange={(e) => setWeekday(Number(e.target.value))}
+                    className="w-full appearance-none rounded-lg border border-border bg-bg py-2 pl-3 pr-9 text-sm outline-none focus:border-accent"
+                  >
+                    {WEEKDAYS.map((w, i) => (
+                      <option key={w} value={i}>
+                        {w}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={14}
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </Section>
+
+        {/* Reset time */}
+        <Section icon={<Clock size={13} />} label="Reset time">
+          <div className="relative max-w-[160px]">
+            <Clock
+              size={14}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+            />
+            <input
+              type="time"
+              value={resetTime}
+              onChange={(e) => setResetTime(e.target.value)}
+              className="w-full rounded-lg border border-border bg-bg py-2 pl-9 pr-3 text-sm outline-none focus:border-accent"
+              aria-label="Reset time"
+            />
           </div>
-        )}
-      </Section>
+          <div className="mt-1 flex items-center justify-between px-1 text-xs text-muted">
+            <span>now</span>
+            <span className="font-mono text-accent">{nowPreview}</span>
+          </div>
+        </Section>
 
-      {/* Reset time */}
-      <Section icon={<Clock size={13} />} label="Reset time">
-        <div className="relative max-w-[160px]">
-          <Clock
-            size={14}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
-          />
-          <input
-            type="time"
-            value={resetTime}
-            onChange={(e) => setResetTime(e.target.value)}
-            className="w-full rounded-lg border border-border bg-bg py-2 pl-9 pr-3 text-sm outline-none focus:border-accent"
-            aria-label="Reset time"
-          />
+        {/* Actions */}
+        <div className="flex gap-2 pt-1">
+          <button
+            type="submit"
+            className="btn-accent flex-1"
+            disabled={create.isPending}
+          >
+            Save
+          </button>
+          <button type="button" className="btn-ghost" onClick={reset}>
+            Cancel
+          </button>
         </div>
-        <div className="mt-1 flex items-center justify-between px-1 text-xs text-muted">
-          <span>now</span>
-          <span className="font-mono text-accent">{nowPreview}</span>
-        </div>
-      </Section>
-
-      {/* Actions */}
-      <div className="flex gap-2 pt-1">
-        <button
-          type="submit"
-          className="btn-accent flex-1"
-          disabled={create.isPending}
-        >
-          Save
-        </button>
-        <button type="button" className="btn-ghost" onClick={reset}>
-          Cancel
-        </button>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 }
 
