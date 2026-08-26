@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Check, X } from "lucide-react";
 import { useHistoryMonth } from "@/features/history/queries";
 import { cx } from "@/lib/utils";
 
@@ -6,17 +7,19 @@ const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
+const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"];
+
+type Completion = { periodKey: string; routineName: string; completedAt: string };
 
 export function HistoryPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
+  const [selected, setSelected] = useState<number | null>(null);
   const { data, isLoading, isError } = useHistoryMonth(year, month);
 
-  const completions = (data as { completions?: unknown[] } | undefined)
-    ?.completions as
-    | { periodKey: string; routineName: string; completedAt: string }[]
-    | undefined;
+  const completions = (data as { completions?: Completion[] } | undefined)
+    ?.completions;
 
   const byDay = useMemo(() => {
     const map = new Map<number, { count: number; names: string[] }>();
@@ -29,6 +32,22 @@ export function HistoryPage() {
     }
     return map;
   }, [completions]);
+
+  const dayDetail = useMemo(() => {
+    if (selected === null) return null;
+    const pad = String(selected).padStart(2, "0");
+    const items = (completions ?? [])
+      .filter((c) => c.periodKey.endsWith(`-${pad}`))
+      .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
+      .map((c) => ({
+        name: c.routineName,
+        time: new Date(c.completedAt).toLocaleTimeString(undefined, {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      }));
+    return { day: selected, items };
+  }, [selected, completions]);
 
   const firstDay = new Date(year, month - 1, 1).getDay(); // 0=Sun
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -44,6 +63,7 @@ export function HistoryPage() {
     if (m > 12) { m = 1; y += 1; }
     setMonth(m);
     setYear(y);
+    setSelected(null);
   }
 
   return (
@@ -66,7 +86,7 @@ export function HistoryPage() {
       ) : (
         <>
           <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted">
-            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+            {WEEKDAYS.map((d, i) => (
               <div key={i} className="py-1">{d}</div>
             ))}
           </div>
@@ -74,27 +94,82 @@ export function HistoryPage() {
             {cells.map((day, i) => {
               if (day === null) return <div key={`e${i}`} />;
               const info = byDay.get(day);
+              const isSelected = selected === day;
               return (
-                <div
+                <button
                   key={day}
-                  title={info?.names.join(", ")}
+                  type="button"
+                  disabled={!info}
+                  onClick={() => setSelected(isSelected ? null : day)}
+                  aria-pressed={isSelected}
                   className={cx(
-                    "flex aspect-square flex-col items-center justify-center rounded-lg border text-xs",
-                    info
-                      ? "border-accent/40 bg-accent/10 text-accent"
-                      : "border-border text-muted",
+                    "group flex aspect-square flex-col items-center justify-center rounded-xl border text-xs transition-all",
+                    !info && "border-border/60 text-muted/30 cursor-default",
+                    info && !isSelected && "border-accent/30 bg-accent/5 text-accent hover:border-accent/60 hover:bg-accent/10",
+                    isSelected && "border-accent bg-accent text-white shadow-md",
                   )}
                 >
                   <span>{day}</span>
                   {info && <span className="font-semibold">{info.count}</span>}
-                </div>
+                </button>
               );
             })}
           </div>
+
           <p className="text-center text-xs text-muted">
-            Tap a day's count shows how many routines you finished. Filled days = at least one done.
+            Tap a filled day to see what you finished.
           </p>
         </>
+      )}
+
+      {dayDetail && (
+        <div
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-4 sm:items-center [animation:fade-in_0.15s_ease-out]"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Routines on ${MONTHS[month - 1]} ${dayDetail.day}`}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setSelected(null);
+          }}
+        >
+          <div className="card w-full max-w-md overflow-hidden [animation:sheet-up_0.2s_ease-out]">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <div>
+                <h2 className="text-sm font-semibold">
+                  {MONTHS[month - 1]} {dayDetail.day}
+                </h2>
+                <p className="text-xs text-muted">
+                  {dayDetail.items.length} {dayDetail.items.length === 1 ? "routine" : "routines"} completed
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-ghost -mr-2 -mt-1 p-1.5"
+                onClick={() => setSelected(null)}
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <ul className="max-h-[60vh] divide-y divide-border overflow-y-auto">
+              {dayDetail.items.map((it, idx) => (
+                <li
+                  key={idx}
+                  className="flex items-center gap-3 px-4 py-3"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+                    <Check size={15} />
+                  </span>
+                  <span className="flex-1 text-sm">{it.name}</span>
+                  <span className="rounded-md bg-bg px-2 py-0.5 font-mono text-xs text-muted">
+                    {it.time}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       )}
     </div>
   );
