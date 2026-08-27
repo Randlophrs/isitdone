@@ -6,9 +6,10 @@ interface Props {
   routines: DashboardRoutine[];
   onToggle: (routine: DashboardRoutine) => void;
   onDelete: (routine: DashboardRoutine) => void;
+  onEdit: (routine: DashboardRoutine) => void;
 }
 
-export function CategoryGroup({ category, routines, onToggle, onDelete }: Props) {
+export function CategoryGroup({ category, routines, onToggle, onDelete, onEdit }: Props) {
   const remaining = routines.filter((r) => !r.isCompleted).length;
   return (
     <section>
@@ -27,6 +28,7 @@ export function CategoryGroup({ category, routines, onToggle, onDelete }: Props)
             routine={r}
             onToggle={onToggle}
             onDelete={onDelete}
+            onEdit={onEdit}
           />
         ))}
       </div>

@@ -36,6 +36,7 @@ export function DashboardPage() {
   const { toasts, show, dismiss } = useToast();
   const [filter, setFilter] = useState<Filter>("all");
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<DashboardRoutine | null>(null);
 
   const toggle = (routine: DashboardRoutine) => {
     if (routine.isCompleted) {
@@ -62,6 +63,8 @@ export function DashboardPage() {
       onSuccess: () => show(`${routine.name} deleted`),
     });
   };
+
+  const handleEdit = (routine: DashboardRoutine) => setEditing(routine);
 
   const groups = useMemo(() => {
     if (!data) return [];
@@ -154,6 +157,7 @@ export function DashboardPage() {
                 routines={g.routines}
                 onToggle={toggle}
                 onDelete={handleDelete}
+                onEdit={handleEdit}
               />
             ))}
           </div>
@@ -173,6 +177,7 @@ export function DashboardPage() {
       <ToastHost toasts={toasts} onDismiss={dismiss} />
 
       <QuickAdd open={adding} onClose={() => setAdding(false)} />
+      <QuickAdd open={editing !== null} routine={editing} onClose={() => setEditing(null)} />
     </div>
   );
 }

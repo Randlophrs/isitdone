@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { Tag, Clock, ChevronDown, Repeat, X } from "lucide-react";
 import {
   useCreateRoutine,
+  useUpdateRoutine,
   useCategories,
   useCreateCategory,
 } from "@/features/routines/queries";
 import { CategorySelect } from "@/components/routines/CategorySelect";
-import type { Frequency, Routine } from "@/types";
+import type { Frequency, Routine, DashboardRoutine } from "@/types";
 import { formatTzNow } from "@/lib/timezones";
 import { Modal } from "@/components/layout/Modal";
 import { cx } from "@/lib/utils";
@@ -27,9 +28,10 @@ const MONTH_WEEKS = [1, 2, 3, 4, 5];
 interface Props {
   open: boolean;
   onClose: () => void;
+  routine?: DashboardRoutine | null;
 }
 
-export function QuickAdd({ open, onClose }: Props) {
+export function QuickAdd({ open, onClose, routine = null }: Props) {
   const [name, setName] = useState("");
   const [frequency, setFrequency] = useState<Frequency>("daily");
   const [weekday, setWeekday] = useState<number>(0);
@@ -39,8 +41,10 @@ export function QuickAdd({ open, onClose }: Props) {
   const [nowPreview, setNowPreview] = useState<string>("");
 
   const create = useCreateRoutine();
+  const update = useUpdateRoutine();
   const { data: categories = [] } = useCategories();
   const createCategory = useCreateCategory();
+  const editing = !!routine;
 
   useEffect(() => {
     const tick = () => setNowPreview(formatTzNow(null));
@@ -48,6 +52,16 @@ export function QuickAdd({ open, onClose }: Props) {
     const id = window.setInterval(tick, 30_000);
     return () => window.clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (!open || !routine) return;
+    setName(routine.name);
+    setFrequency(routine.frequency);
+    setWeekday(routine.weekday ?? 0);
+    setMonthweek(routine.monthweek ?? 1);
+    setCategoryId(routine.categoryId ?? "");
+    setResetTime(routine.resetTime ?? "00:00");
+  }, [open, routine]);
 
   function reset() {
     setName("");
@@ -71,7 +85,11 @@ export function QuickAdd({ open, onClose }: Props) {
       monthweek: frequency === "monthly" ? monthweek : null,
     };
     if (categoryId) payload.categoryId = categoryId;
-    create.mutate(payload, { onSuccess: () => reset() });
+    if (editing && routine) {
+      update.mutate({ id: routine.id, data: payload }, { onSuccess: () => reset() });
+    } else {
+      create.mutate(payload, { onSuccess: () => reset() });
+    }
   }
 
   function handleCreateCategory(name: string) {
@@ -81,13 +99,13 @@ export function QuickAdd({ open, onClose }: Props) {
   if (!open) return null;
 
   return (
-    <Modal open={open} onClose={onClose} label="Add routine">
+    <Modal open={open} onClose={onClose} label={editing ? "Edit routine" : "Add routine"}>
       <form
         onSubmit={submit}
         className="card max-h-[88vh] w-full max-w-md space-y-4 overflow-y-auto p-4"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">New routine</h2>
+          <h2 className="text-sm font-semibold">{editing ? "Edit routine" : "New routine"}</h2>
           <button
             type="button"
             className="btn-ghost -mr-2 -mt-1 p-1.5"
@@ -230,9 +248,9 @@ export function QuickAdd({ open, onClose }: Props) {
           <button
             type="submit"
             className="btn-accent flex-1"
-            disabled={create.isPending}
+            disabled={create.isPending || update.isPending}
           >
-            Save
+            {editing ? "Save" : "Add"}
           </button>
           <button type="button" className="btn-ghost" onClick={reset}>
             Cancel

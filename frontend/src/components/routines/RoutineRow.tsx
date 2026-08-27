@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, Pencil } from "lucide-react";
 import type { DashboardRoutine } from "@/types";
 import { cx, formatTime, frequencyLabel, compactSchedule } from "@/lib/utils";
 
@@ -7,9 +7,10 @@ interface Props {
   routine: DashboardRoutine;
   onToggle: (routine: DashboardRoutine) => void;
   onDelete: (routine: DashboardRoutine) => void;
+  onEdit: (routine: DashboardRoutine) => void;
 }
 
-export function RoutineRow({ routine, onToggle, onDelete }: Props) {
+export function RoutineRow({ routine, onToggle, onDelete, onEdit }: Props) {
   const done = routine.isCompleted;
   const schedule = compactSchedule(routine.frequency, routine.weekday, routine.monthweek);
   const [confirming, setConfirming] = useState(false);
@@ -100,6 +101,19 @@ export function RoutineRow({ routine, onToggle, onDelete }: Props) {
             📌
           </span>
         )}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onEdit(routine)}
+        aria-label={`Edit ${routine.name}`}
+        className={cx(
+          "absolute right-9 top-2 flex h-6 w-6 items-center justify-center rounded-md text-muted transition-opacity",
+          "hover:bg-accent/10 hover:text-accent focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+          confirming ? "opacity-0" : "opacity-0 group-hover:opacity-100",
+        )}
+      >
+        <Pencil size={14} />
       </button>
 
       <button
