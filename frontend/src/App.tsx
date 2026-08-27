@@ -14,6 +14,7 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { HistoryPage } from "@/pages/HistoryPage";
 import { StatisticsPage } from "@/pages/StatisticsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { GridSweep } from "@/components/layout/GridSweep";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -27,6 +28,7 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <GridSweep />
       <BrowserRouter>
         <div className="md:flex md:min-h-screen">
           <aside className="flex md:flex-col border-b md:border-b-0 md:border-r border-border bg-surface md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0">
