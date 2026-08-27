@@ -86,12 +86,12 @@ export function HistoryPage() {
         <div className="card p-6 text-center text-sm text-muted">Loading…</div>
       ) : (
         <>
-          <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted">
+          <div className="card grid grid-cols-7 gap-1 p-3 text-center text-xs font-medium text-muted">
             {WEEKDAYS.map((d, i) => (
               <div key={i} className="py-1">{d}</div>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1">
+          <div className="card grid grid-cols-7 gap-1.5 p-3">
             {cells.map((day, i) => {
               if (day === null) return <div key={`e${i}`} />;
               const info = byDay.get(day);
@@ -105,7 +105,7 @@ export function HistoryPage() {
                   aria-pressed={isSelected}
                   className={cx(
                     "group flex aspect-square flex-col items-center justify-center rounded-xl border text-xs transition-all",
-                    !info && "border-border/60 text-muted/30 cursor-default",
+                    !info && "border-border/60 text-muted/70 cursor-default",
                     info && !isSelected && "border-accent/30 bg-accent/5 text-accent hover:border-accent/60 hover:bg-accent/10",
                     isSelected && "border-accent bg-accent text-white shadow-md",
                   )}
