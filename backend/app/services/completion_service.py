@@ -26,6 +26,19 @@ def is_completed(
     ).first()
 
 
+def is_skipped(
+    session: Session, routine: Routine, period_key: str
+) -> bool:
+    row = session.exec(
+        select(Completion).where(
+            Completion.routine_id == routine.id,
+            Completion.period_key == period_key,
+            Completion.skipped == True,  # noqa: E712
+        )
+    ).first()
+    return row is not None
+
+
 def complete_routine(
     session: Session, routine: Routine, now: datetime | None = None
 ) -> Completion:
@@ -65,6 +78,60 @@ def uncomplete_routine(
     )
     existing = is_completed(session, routine, period_key)
     if existing:
+        session.delete(existing)
+        session.commit()
+
+
+def skip_routine(
+    session: Session, routine: Routine, now: datetime | None = None
+) -> Completion:
+    """Mark the active period as skipped (satisfied, not completed).
+
+    A skipped period keeps the streak alive and does not count toward the
+    completion rate. If the period was completed, it is replaced by a skip.
+    """
+    period_key = period_key_for_routine(
+        routine.frequency,
+        routine.timezone,
+        routine.reset_time,
+        now,
+        weekday=routine.weekday,
+        monthweek=routine.monthweek,
+    )
+    existing = is_completed(session, routine, period_key)
+    if existing:
+        existing.skipped = True
+        existing.completed_at = _utcnow()
+        session.add(existing)
+        session.commit()
+        session.refresh(existing)
+        return existing
+    completion = Completion(
+        id=generate_id(),
+        routine_id=routine.id,
+        period_key=period_key,
+        completed_at=_utcnow(),
+        skipped=True,
+    )
+    session.add(completion)
+    session.commit()
+    session.refresh(completion)
+    return completion
+
+
+def unskip_routine(
+    session: Session, routine: Routine, now: datetime | None = None
+) -> None:
+    period_key = period_key_for_routine(
+        routine.frequency,
+        routine.timezone,
+        routine.reset_time,
+        now,
+        weekday=routine.weekday,
+        monthweek=routine.monthweek,
+    )
+    existing = is_completed(session, routine, period_key)
+    if existing and existing.skipped:
         session.delete(existing)
         session.commit()
 

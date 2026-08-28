@@ -49,6 +49,7 @@ export interface DashboardRoutine {
   resetTime: string | null;
   periodKey: string;
   isCompleted: boolean;
+  isSkipped: boolean;
   completedAt: string | null;
 }
 

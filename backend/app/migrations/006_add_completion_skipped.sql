@@ -1,0 +1,1 @@
+ALTER TABLE completion ADD COLUMN skipped BOOLEAN DEFAULT 0;

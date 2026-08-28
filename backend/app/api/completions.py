@@ -30,6 +30,18 @@ def uncomplete_routine(session: SessionDep, routine_id: str):
     completion_service.uncomplete_routine(session, routine)
 
 
+@router.post("/{routine_id}/skip", response_model=CompletionRead)
+def skip_routine(session: SessionDep, routine_id: str):
+    routine = _get_or_404(session, routine_id)
+    return completion_service.skip_routine(session, routine)
+
+
+@router.delete("/{routine_id}/skip", status_code=204)
+def unskip_routine(session: SessionDep, routine_id: str):
+    routine = _get_or_404(session, routine_id)
+    completion_service.unskip_routine(session, routine)
+
+
 @router.get(
     "/{routine_id}/completions", response_model=list[CompletionRead]
 )

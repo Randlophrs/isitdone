@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { useDashboard } from "@/features/routines/queries";
-import { useCompleteRoutine, useUncompleteRoutine, useDeleteRoutine } from "@/features/routines/queries";
+import { useCompleteRoutine, useUncompleteRoutine, useDeleteRoutine, useSkipRoutine, useUnskipRoutine } from "@/features/routines/queries";
 import { useToast } from "@/hooks/use-toast";
 import { ToastHost } from "@/components/layout/Toast";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
@@ -33,6 +33,8 @@ export function DashboardPage() {
   const complete = useCompleteRoutine();
   const uncomplete = useUncompleteRoutine();
   const deleteRoutine = useDeleteRoutine();
+  const skip = useSkipRoutine();
+  const unskip = useUnskipRoutine();
   const { toasts, show, dismiss } = useToast();
   const [filter, setFilter] = useState<Filter>("all");
   const [adding, setAdding] = useState(false);
@@ -47,6 +49,10 @@ export function DashboardPage() {
             onAction: () => complete.mutate(routine.id),
           }),
       });
+    } else if (routine.isSkipped) {
+      unskip.mutate(routine.id, {
+        onSuccess: () => show(`${routine.name} unskipped`),
+      });
     } else {
       complete.mutate(routine.id, {
         onSuccess: () =>
@@ -56,6 +62,18 @@ export function DashboardPage() {
           }),
       });
     }
+  };
+
+  const handleSkip = (routine: DashboardRoutine) => {
+    if (routine.isCompleted) {
+      uncomplete.mutate(routine.id, { onSuccess: () => skip.mutate(routine.id) });
+    } else {
+      skip.mutate(routine.id, { onSuccess: () => show(`${routine.name} skipped`) });
+    }
+  };
+
+  const handleUnskip = (routine: DashboardRoutine) => {
+    unskip.mutate(routine.id, { onSuccess: () => show(`${routine.name} unskipped`) });
   };
 
   const handleDelete = (routine: DashboardRoutine) => {
@@ -158,6 +176,8 @@ export function DashboardPage() {
                 onToggle={toggle}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
+                onSkip={handleSkip}
+                onUnskip={handleUnskip}
               />
             ))}
           </div>

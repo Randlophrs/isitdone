@@ -7,10 +7,12 @@ interface Props {
   onToggle: (routine: DashboardRoutine) => void;
   onDelete: (routine: DashboardRoutine) => void;
   onEdit: (routine: DashboardRoutine) => void;
+  onSkip: (routine: DashboardRoutine) => void;
+  onUnskip: (routine: DashboardRoutine) => void;
 }
 
-export function CategoryGroup({ category, routines, onToggle, onDelete, onEdit }: Props) {
-  const remaining = routines.filter((r) => !r.isCompleted).length;
+export function CategoryGroup({ category, routines, onToggle, onDelete, onEdit, onSkip, onUnskip }: Props) {
+  const remaining = routines.filter((r) => !r.isCompleted && !r.isSkipped).length;
   return (
     <section>
       <div className="mb-2 flex items-center justify-between px-1">
@@ -29,6 +31,8 @@ export function CategoryGroup({ category, routines, onToggle, onDelete, onEdit }
             onToggle={onToggle}
             onDelete={onDelete}
             onEdit={onEdit}
+            onSkip={onSkip}
+            onUnskip={onUnskip}
           />
         ))}
       </div>

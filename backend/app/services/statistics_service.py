@@ -14,6 +14,17 @@ from ..utils.dates import now_in_timezone
 def _completed_keys(session: Session, routine_id: str) -> set[str]:
     rows = session.exec(
         select(Completion.period_key).where(
+            Completion.routine_id == routine_id,
+            Completion.skipped == False,  # noqa: E712
+        )
+    ).all()
+    return set(rows)
+
+
+def _satisfied_keys(session: Session, routine_id: str) -> set[str]:
+    """Period keys that are completed OR skipped (streak counts both)."""
+    rows = session.exec(
+        select(Completion.period_key).where(
             Completion.routine_id == routine_id
         )
     ).all()
@@ -22,6 +33,7 @@ def _completed_keys(session: Session, routine_id: str) -> set[str]:
 
 def routine_statistics(session: Session, routine: Routine) -> dict:
     completed_keys = _completed_keys(session, routine.id)
+    satisfied_keys = _satisfied_keys(session, routine.id)
     created = _parse_date(routine.created_at, routine.timezone)
     today = now_for_routine(routine.timezone, routine.reset_time).date()
     # Periods elapsed since creation (inclusive of creation day) up to today.
@@ -36,8 +48,8 @@ def routine_statistics(session: Session, routine: Routine) -> dict:
     done = len(completed_keys & set(periods))
     rate = round((done / elapsed) * 100, 1) if elapsed else 0.0
 
-    current = _current_streak(periods, completed_keys)
-    longest = _longest_streak(periods, completed_keys)
+    current = _current_streak(periods, satisfied_keys)
+    longest = _longest_streak(periods, satisfied_keys)
 
     return {
         "routineId": routine.id,

@@ -8,3 +8,4 @@ class CompletionRead(BaseSchema):
     routine_id: str
     period_key: str
     completed_at: str
+    skipped: bool = False

@@ -8,7 +8,7 @@ from sqlmodel import Session, select
 from ..models.category import Category
 from ..models.completion import Completion
 from ..models.routine import Routine
-from ..services.completion_service import is_completed
+from ..services.completion_service import is_completed, is_skipped
 from ..services.period_service import period_key_for_routine, period_keys
 from ..services.routine_service import list_routines
 
@@ -33,7 +33,8 @@ def current_dashboard(session: Session) -> dict:
             weekday=routine.weekday,
             monthweek=routine.monthweek,
         )
-        done = is_completed(session, routine, period_key) is not None
+        skipped = is_skipped(session, routine, period_key)
+        done = (not skipped) and is_completed(session, routine, period_key) is not None
         if done:
             completed += 1
         cat = categories.get(routine.category_id) if routine.category_id else None
@@ -53,6 +54,7 @@ def current_dashboard(session: Session) -> dict:
             "monthweek": routine.monthweek,
             "periodKey": period_key,
             "isCompleted": done,
+            "isSkipped": skipped,
             "completedAt": _completed_at(session, routine.id, period_key),
         }
         groups[cat_name]["category"] = cat_name

@@ -75,6 +75,30 @@ export function useUncompleteRoutine() {
   });
 }
 
+export function useSkipRoutine() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.skip(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["routines"] });
+      qc.invalidateQueries({ queryKey: ["statistics"] });
+    },
+  });
+}
+
+export function useUnskipRoutine() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.unskip(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["routines"] });
+      qc.invalidateQueries({ queryKey: ["statistics"] });
+    },
+  });
+}
+
 export function useCreateRoutine() {
   const qc = useQueryClient();
   return useMutation({

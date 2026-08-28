@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, X, Pencil } from "lucide-react";
+import { Check, X, Pencil, SkipForward } from "lucide-react";
 import type { DashboardRoutine } from "@/types";
 import { cx, formatTime, frequencyLabel, compactSchedule } from "@/lib/utils";
 
@@ -8,10 +8,13 @@ interface Props {
   onToggle: (routine: DashboardRoutine) => void;
   onDelete: (routine: DashboardRoutine) => void;
   onEdit: (routine: DashboardRoutine) => void;
+  onSkip: (routine: DashboardRoutine) => void;
+  onUnskip: (routine: DashboardRoutine) => void;
 }
 
-export function RoutineRow({ routine, onToggle, onDelete, onEdit }: Props) {
+export function RoutineRow({ routine, onToggle, onDelete, onEdit, onSkip, onUnskip }: Props) {
   const done = routine.isCompleted;
+  const skipped = routine.isSkipped;
   const schedule = compactSchedule(routine.frequency, routine.weekday, routine.monthweek);
   const [confirming, setConfirming] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -41,9 +44,10 @@ export function RoutineRow({ routine, onToggle, onDelete, onEdit }: Props) {
         onClick={() => onToggle(routine)}
         aria-pressed={done}
         className={cx(
-          "flex h-full w-full items-start gap-3 rounded-xl border border-border bg-surface px-3 py-3 pr-10 text-left transition-colors",
+          "flex h-full w-full items-start gap-3 rounded-xl border border-border bg-surface px-3 py-3 pr-24 text-left transition-colors",
           "hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
           done && "opacity-60",
+          skipped && "border-dashed border-muted/50 bg-muted/5",
         )}
       >
         <span
@@ -63,6 +67,7 @@ export function RoutineRow({ routine, onToggle, onDelete, onEdit }: Props) {
             className={cx(
               "block truncate text-sm font-medium",
               done && "line-through",
+              skipped && "text-muted",
             )}
           >
             {routine.name}
@@ -87,6 +92,14 @@ export function RoutineRow({ routine, onToggle, onDelete, onEdit }: Props) {
             >
               {routine.resetTime ?? "00:00"}
             </span>
+            {skipped && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="rounded bg-muted/15 px-1 py-0.5 text-[10px] font-medium text-muted">
+                  skipped
+                </span>
+              </>
+            )}
             {done && routine.completedAt && (
               <>
                 <span aria-hidden>·</span>
@@ -108,12 +121,28 @@ export function RoutineRow({ routine, onToggle, onDelete, onEdit }: Props) {
         onClick={() => onEdit(routine)}
         aria-label={`Edit ${routine.name}`}
         className={cx(
-          "absolute right-9 top-2 flex h-6 w-6 items-center justify-center rounded-md text-muted transition-opacity",
+          "absolute right-16 top-2 flex h-6 w-6 items-center justify-center rounded-md text-muted transition-opacity",
           "hover:bg-accent/10 hover:text-accent focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
           confirming ? "opacity-0" : "opacity-0 group-hover:opacity-100",
         )}
       >
         <Pencil size={14} />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => (skipped ? onUnskip(routine) : onSkip(routine))}
+        aria-label={skipped ? `Unskip ${routine.name}` : `Skip ${routine.name}`}
+        className={cx(
+          "absolute right-9 top-2 flex h-6 w-6 items-center justify-center rounded-md transition-opacity",
+          skipped
+            ? "text-accent opacity-100 hover:bg-accent/10"
+            : "text-muted opacity-0 group-hover:opacity-100 hover:bg-accent/10 hover:text-accent",
+          "focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+          confirming && "opacity-0",
+        )}
+      >
+        <SkipForward size={14} />
       </button>
 
       <button

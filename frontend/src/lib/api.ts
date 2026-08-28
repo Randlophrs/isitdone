@@ -56,6 +56,10 @@ export const api = {
     request<Completion>(`/routines/${id}/complete`, { method: "POST" }),
   uncomplete: (id: string) =>
     request<void>(`/routines/${id}/complete`, { method: "DELETE" }),
+  skip: (id: string) =>
+    request<Completion>(`/routines/${id}/skip`, { method: "POST" }),
+  unskip: (id: string) =>
+    request<void>(`/routines/${id}/skip`, { method: "DELETE" }),
   listCompletions: (id: string) =>
     request<Completion[]>(`/routines/${id}/completions`),
 
