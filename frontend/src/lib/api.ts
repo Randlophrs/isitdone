@@ -81,7 +81,10 @@ export const api = {
     request<RoutineStats>(`/statistics/routine/${id}`),
 
   // history
-  history: () => request<{ periods: unknown[] }>("/history"),
+  history: () =>
+    request<{
+      periods: { periodKey: string; completions: { routineName: string }[] }[];
+    }>("/history"),
   historyMonth: (year: number, month: number) =>
     request<unknown>(`/history/${year}/${month}`),
   historyRoutine: (id: string) =>
