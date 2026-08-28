@@ -86,11 +86,12 @@ def period_key_for(
     return daily_key(now)
 
 
-def _weekday_occurrence(weekday: int, now: datetime) -> date:
+def _weekday_occurrence(weekday: int, now: datetime | date) -> date:
     """Date of the most recent occurrence of `weekday` on or before `now`."""
+    base = now if isinstance(now, date) and not isinstance(now, datetime) else now.date()
     wd = ((weekday % 7) + 7) % 7
-    delta = (now.weekday() - wd) % 7
-    return (now - timedelta(days=delta)).date()
+    delta = (base.weekday() - wd) % 7
+    return base - timedelta(days=delta)
 
 
 def now_for_routine(tz: str | None = None, reset_time: str | None = None) -> datetime:
