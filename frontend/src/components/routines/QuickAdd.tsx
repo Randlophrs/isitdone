@@ -92,8 +92,8 @@ export function QuickAdd({ open, onClose, routine = null }: Props) {
     }
   }
 
-  function handleCreateCategory(name: string) {
-    return createCategory.mutateAsync({ name });
+  function handleCreateCategory(data: { name: string; color?: string; icon?: string }) {
+    return createCategory.mutateAsync(data);
   }
 
   if (!open) return null;

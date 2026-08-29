@@ -2,12 +2,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Tag, Check, Plus, X } from "lucide-react";
 import type { Category } from "@/types";
 import { useDeleteCategory, useCategoryUsage } from "@/features/routines/queries";
+import {
+  CATEGORY_COLORS,
+  CATEGORY_ICONS,
+  getCategoryIcon,
+} from "@/lib/category-style";
+import { cx } from "@/lib/utils";
 
 interface Props {
   categories: Category[];
   value: string | null;
   onChange: (id: string | null) => void;
-  onCreate: (name: string) => Promise<Category>;
+  onCreate: (data: { name: string; color?: string; icon?: string }) => Promise<Category>;
 }
 
 export function CategorySelect({ categories, value, onChange, onCreate }: Props) {
@@ -15,6 +21,8 @@ export function CategorySelect({ categories, value, onChange, onCreate }: Props)
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Category | null>(null);
+  const [color, setColor] = useState<string>(CATEGORY_COLORS[5]);
+  const [icon, setIcon] = useState<string>(CATEGORY_ICONS[0].name);
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -65,7 +73,7 @@ export function CategorySelect({ categories, value, onChange, onCreate }: Props)
     if (!name || busy) return;
     setBusy(true);
     try {
-      const cat = await onCreate(name);
+      const cat = await onCreate({ name, color, icon });
       onChange(cat.id);
       setOpen(false);
     } finally {
@@ -95,11 +103,7 @@ export function CategorySelect({ categories, value, onChange, onCreate }: Props)
       >
         {selected ? (
           <>
-            <span
-              className="h-2.5 w-2.5 flex-none rounded-full"
-              style={{ background: selected.color ?? "rgb(var(--muted))" }}
-              aria-hidden
-            />
+            <CategoryBadge color={selected.color} icon={selected.icon} />
             <span className="truncate">{selected.name}</span>
           </>
         ) : (
@@ -161,11 +165,7 @@ export function CategorySelect({ categories, value, onChange, onCreate }: Props)
                         onClick={() => pick(c)}
                         className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm"
                       >
-                        <span
-                          className="h-2.5 w-2.5 flex-none rounded-full"
-                          style={{ background: c.color ?? "rgb(var(--muted))" }}
-                          aria-hidden
-                        />
+                        <CategoryBadge color={c.color} icon={c.icon} />
                         <span className="truncate">{c.name}</span>
                         {c.id === value && (
                           <Check size={14} className="ml-auto text-accent" />
@@ -184,15 +184,53 @@ export function CategorySelect({ categories, value, onChange, onCreate }: Props)
                   </li>
                 ))}
                 {query.trim() && !exactExists && (
-                  <li>
+                  <li className="space-y-2 border-t border-border p-3">
+                    <div className="flex items-center gap-2">
+                      <CategoryBadge color={color} icon={icon} />
+                      <span className="text-sm">
+                        Create “{query.trim()}”
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {CATEGORY_COLORS.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setColor(c)}
+                          aria-label={`Color ${c}`}
+                          className={cx(
+                            "h-5 w-5 rounded-full ring-2 ring-offset-1 ring-offset-surface transition",
+                            color === c ? "ring-accent" : "ring-transparent",
+                          )}
+                          style={{ background: c }}
+                        />
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-8 gap-1">
+                      {CATEGORY_ICONS.map(({ name, Icon }) => (
+                        <button
+                          key={name}
+                          type="button"
+                          onClick={() => setIcon(name)}
+                          aria-label={`Icon ${name}`}
+                          className={cx(
+                            "flex items-center justify-center rounded-md p-1 transition-colors",
+                            icon === name
+                              ? "bg-accent/15 text-accent"
+                              : "text-muted hover:bg-bg",
+                          )}
+                        >
+                          <Icon size={15} />
+                        </button>
+                      ))}
+                    </div>
                     <button
                       type="button"
                       onClick={createAndPick}
                       disabled={busy}
-                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-accent hover:bg-bg disabled:opacity-50"
+                      className="btn-accent w-full"
                     >
-                      <Plus size={14} />
-                      Create “{query.trim()}”
+                      <Plus size={14} /> Create
                     </button>
                   </li>
                 )}
@@ -251,6 +289,25 @@ function ConfirmDelete({
         </button>
       </div>
     </div>
+  );
+}
+
+function CategoryBadge({
+  color,
+  icon,
+}: {
+  color: string | null | undefined;
+  icon: string | null | undefined;
+}) {
+  const Icon = getCategoryIcon(icon);
+  return (
+    <span
+      className="flex h-5 w-5 flex-none items-center justify-center rounded-full"
+      style={{ background: (color ?? "rgb(var(--muted))") + "22", color: color ?? "rgb(var(--muted))" }}
+      aria-hidden
+    >
+      <Icon size={12} />
+    </span>
   );
 }
 
