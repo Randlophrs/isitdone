@@ -83,7 +83,10 @@ export const api = {
   // history
   history: () =>
     request<{
-      periods: { periodKey: string; completions: { routineName: string }[] }[];
+      periods: {
+        periodKey: string;
+        completions: { routineName: string; completedAt: string }[];
+      }[];
     }>("/history"),
   historyMonth: (year: number, month: number) =>
     request<unknown>(`/history/${year}/${month}`),
