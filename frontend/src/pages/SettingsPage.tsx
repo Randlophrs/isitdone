@@ -1,15 +1,45 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   useExportBackup,
   useImportBackup,
   useRestoreSqlite,
 } from "@/features/backup/queries";
+import { useRoutines } from "@/features/routines/queries";
 import { useTheme } from "@/hooks/use-theme";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
 import { cx } from "@/lib/utils";
+import {
+  getReminderTimes,
+  remindersEnabled,
+  setReminderTime,
+  setRemindersEnabled,
+} from "@/lib/reminders";
+import { Bell } from "lucide-react";
 
 export function SettingsPage() {
   const { theme, toggle } = useTheme();
+  const { data: routines = [] } = useRoutines();
+  const [enabled, setEnabled] = useState(remindersEnabled());
+  const [times, setTimes] = useState<Record<string, string>>(getReminderTimes());
+
+  useEffect(() => {
+    setTimes(getReminderTimes());
+  }, [routines]);
+
+  async function toggleReminders(next: boolean) {
+    if (next && "Notification" in window && Notification.permission === "default") {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") return;
+    }
+    setRemindersEnabled(next);
+    setEnabled(next);
+  }
+
+  function onTime(routineId: string, time: string | null) {
+    setReminderTime(routineId, time);
+    setTimes(getReminderTimes());
+  }
+
   const exportMut = useExportBackup();
   const importMut = useImportBackup();
   const restoreMut = useRestoreSqlite();
@@ -55,6 +85,50 @@ export function SettingsPage() {
       )}
 
       <section className="card divide-y divide-border">
+        <div className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="flex items-center gap-1.5 font-medium">
+                <Bell size={14} /> Reminders
+              </p>
+              <p className="text-xs text-muted">
+                Browser notification at each routine’s time. Pending only.
+              </p>
+            </div>
+            <button
+              className={cx("btn-accent", !enabled && "opacity-60")}
+              onClick={() => toggleReminders(!enabled)}
+            >
+              {enabled ? "On" : "Off"}
+            </button>
+          </div>
+
+          {enabled && (
+            <div className="mt-3 space-y-2">
+              {routines.length === 0 && (
+                <p className="text-xs text-muted">No routines yet.</p>
+              )}
+              {routines.map((r) => (
+                <div
+                  key={r.id}
+                  className="flex items-center justify-between gap-3 text-sm"
+                >
+                  <span className="truncate">{r.name}</span>
+                  <input
+                    type="time"
+                    value={times[r.id] ?? ""}
+                    onChange={(e) =>
+                      onTime(r.id, e.target.value || null)
+                    }
+                    className="rounded-lg border border-border bg-bg px-2 py-1 text-sm outline-none focus:border-accent"
+                    aria-label={`Reminder time for ${r.name}`}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center justify-between p-4">
           <div>
             <p className="font-medium">Theme</p>

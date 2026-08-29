@@ -15,6 +15,7 @@ import { HistoryPage } from "@/pages/HistoryPage";
 import { StatisticsPage } from "@/pages/StatisticsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { GridSweep } from "@/components/layout/GridSweep";
+import { useReminders } from "@/hooks/use-reminders";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -24,10 +25,19 @@ const navItems = [
 ];
 
 export default function App() {
-  const { theme, toggle } = useTheme();
-
   return (
     <QueryClientProvider client={queryClient}>
+      <Shell />
+    </QueryClientProvider>
+  );
+}
+
+function Shell() {
+  const { theme, toggle } = useTheme();
+  useReminders();
+
+  return (
+    <>
       <GridSweep />
       <BrowserRouter>
         <div className="md:flex md:min-h-screen">
@@ -85,6 +95,6 @@ export default function App() {
           </main>
         </div>
       </BrowserRouter>
-    </QueryClientProvider>
+    </>
   );
 }
