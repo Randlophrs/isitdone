@@ -104,9 +104,21 @@ export function RoutineRow({ routine, onToggle, onDelete, onEdit, onSkip, onUnsk
             {skipped && (
               <>
                 <span aria-hidden>·</span>
-                <span className="rounded bg-muted/15 px-1 py-0.5 text-[10px] font-medium text-muted">
-                  skipped
-                </span>
+                {routine.freezeUsedThisWeek ? (
+                  <span
+                    className="rounded bg-accent/10 px-1 py-0.5 text-[10px] font-medium text-accent"
+                    title="Weekly freeze used — streak protected"
+                  >
+                    freeze
+                  </span>
+                ) : (
+                  <span
+                    className="rounded bg-amber-500/15 px-1 py-0.5 text-[10px] font-medium text-amber-600"
+                    title="Skip past the weekly freeze — streak may break"
+                  >
+                    skipped
+                  </span>
+                )}
               </>
             )}
             {done && routine.completedAt && (

@@ -7,7 +7,11 @@ from sqlmodel import Session, select
 
 from ..models.completion import Completion
 from ..models.routine import Routine
-from ..services.period_service import period_key_for_routine
+from ..services.period_service import (
+  period_key_for_routine,
+  weekly_key,
+  now_for_routine,
+)
 from ..utils.ids import generate_id
 
 
@@ -87,8 +91,10 @@ def skip_routine(
 ) -> Completion:
     """Mark the active period as skipped (satisfied, not completed).
 
-    A skipped period keeps the streak alive and does not count toward the
-    completion rate. If the period was completed, it is replaced by a skip.
+    A skipped period does not count toward the completion rate. The *first*
+    skip each week is a "freeze" that also keeps the streak alive; further
+    skips that week break the streak (streak grace, capped at one per week).
+    If the period was completed, it is replaced by a skip.
     """
     period_key = period_key_for_routine(
         routine.frequency,
@@ -98,9 +104,11 @@ def skip_routine(
         weekday=routine.weekday,
         monthweek=routine.monthweek,
     )
+    frozen = not _freeze_used_this_week(session, routine, now)
     existing = is_completed(session, routine, period_key)
     if existing:
         existing.skipped = True
+        existing.frozen = frozen
         existing.completed_at = _utcnow()
         session.add(existing)
         session.commit()
@@ -112,6 +120,7 @@ def skip_routine(
         period_key=period_key,
         completed_at=_utcnow(),
         skipped=True,
+        frozen=frozen,
     )
     session.add(completion)
     session.commit()
@@ -134,6 +143,36 @@ def unskip_routine(
     if existing and existing.skipped:
         session.delete(existing)
         session.commit()
+
+
+def freeze_used_this_week(
+    session: Session, routine: Routine, now: datetime | None = None
+) -> bool:
+    """True if a freeze (streak-protecting skip) was already used this week."""
+    return _freeze_used_this_week(session, routine, now)
+
+
+def _freeze_used_this_week(
+    session: Session, routine: Routine, now: datetime | None = None
+) -> bool:
+    ref = now_for_routine(routine.timezone, routine.reset_time) if now is None else now
+    week = weekly_key(ref)
+    rows = session.exec(
+        select(Completion.completed_at).where(
+            Completion.routine_id == routine.id,
+            Completion.skipped == True,  # noqa: E712
+            Completion.frozen == True,  # noqa: E712
+        )
+    ).all()
+    # ponytail: compare week bucket of completed_at — avoids a second tz parse.
+    for ts in rows:
+        try:
+            d = datetime.fromisoformat(ts)
+        except (ValueError, TypeError):
+            continue
+        if weekly_key(d) == week:
+            return True
+    return False
 
 
 def list_completions(

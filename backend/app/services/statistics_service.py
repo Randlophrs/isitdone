@@ -22,13 +22,18 @@ def _completed_keys(session: Session, routine_id: str) -> set[str]:
 
 
 def _satisfied_keys(session: Session, routine_id: str) -> set[str]:
-    """Period keys that are completed OR skipped (streak counts both)."""
+    """Period keys that count toward the streak: completed, or a freeze
+    (streak-protecting) skip. A plain skip beyond the weekly freeze breaks it."""
     rows = session.exec(
-        select(Completion.period_key).where(
+        select(Completion.period_key, Completion.skipped, Completion.frozen).where(
             Completion.routine_id == routine_id
         )
     ).all()
-    return set(rows)
+    return {
+        pk
+        for pk, skipped, frozen in rows
+        if not skipped or frozen
+    }
 
 
 def routine_statistics(session: Session, routine: Routine) -> dict:

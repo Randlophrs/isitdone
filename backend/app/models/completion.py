@@ -16,6 +16,7 @@ class Completion(SQLModel, table=True):
     period_key: str = Field(index=True)
     completed_at: str = Field(default_factory=_utcnow)
     skipped: bool = Field(default=False)
+    frozen: bool = Field(default=False)
 
     __table_args__ = (
         # Enforce one completion per routine per period.

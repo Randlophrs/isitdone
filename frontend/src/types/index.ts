@@ -50,6 +50,7 @@ export interface DashboardRoutine {
   periodKey: string;
   isCompleted: boolean;
   isSkipped: boolean;
+  freezeUsedThisWeek: boolean;
   completedAt: string | null;
 }
 

@@ -9,3 +9,4 @@ class CompletionRead(BaseSchema):
     period_key: str
     completed_at: str
     skipped: bool = False
+    frozen: bool = False

@@ -1,0 +1,1 @@
+ALTER TABLE completion ADD COLUMN frozen BOOLEAN DEFAULT 0;

@@ -8,7 +8,7 @@ from sqlmodel import Session, select
 from ..models.category import Category
 from ..models.completion import Completion
 from ..models.routine import Routine
-from ..services.completion_service import is_completed, is_skipped
+from ..services.completion_service import is_completed, is_skipped, freeze_used_this_week
 from ..services.period_service import period_key_for_routine, period_keys
 from ..services.routine_service import list_routines
 
@@ -55,6 +55,7 @@ def current_dashboard(session: Session) -> dict:
             "periodKey": period_key,
             "isCompleted": done,
             "isSkipped": skipped,
+            "freezeUsedThisWeek": freeze_used_this_week(session, routine),
             "completedAt": _completed_at(session, routine.id, period_key),
         }
         groups[cat_name]["category"] = cat_name
