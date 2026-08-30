@@ -30,16 +30,18 @@ Butuh **Python 3.11+** dan **Git**. Node.js hanya dipakai saat install untuk mem
 Buka PowerShell, jalankan satu baris:
 
 ```powershell
-powershell -NoExit -Command "irm https://raw.githubusercontent.com/Randlophrs/isitdone/main/install.ps1 | iex"
+irm https://raw.githubusercontent.com/Randlophrs/isitdone/main/install.ps1 | iex
 ```
 
-Buka terminal baru, ketik:
+Script meng-clone repo, menyiapkan virtual environment, menginstal dependensi, membangun frontend, lalu mendaftarkan perintah `isitdone` ke PATH. Setelah selesai, `isitdone` langsung dijalankan: server berjalan di background, ikon tray muncul, dan browser otomatis kebuka. Terminal boleh ditutup; aplikasinya tetap jalan di tray.
+
+Untuk menjalankan lagi nanti, buka terminal baru lalu ketik:
 
 ```bash
 isitdone
 ```
 
-Server berjalan di background di `http://127.0.0.1:8000`. Ikon tray centang hijau muncul dan browser otomatis kebuka. Quit dari menu tray untuk menghentikan server.
+Quit dari menu tray untuk menghentikan server.
 
 Cara lain, clone manual lalu jalankan `install.ps1` dari dalam folder repo.
 

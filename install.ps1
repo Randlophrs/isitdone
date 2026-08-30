@@ -117,5 +117,13 @@ if (($userPath -split ";") -notcontains $DestDir) {
 
 Write-Progress -Activity "Installing isitdone" -Completed
 Write-Host ""
-Write-Host "Done. isitdone is installed. Open a NEW terminal and run:  isitdone" -ForegroundColor Green
-Write-Host ""
+Write-Host "Done. Launching isitdone..." -ForegroundColor Green
+
+# Launch immediately so the user gets the app without reopening a terminal.
+# Run the shim by absolute path - the freshly added PATH entry is not visible
+# in this same process, but the file exists regardless.
+if (Test-Path $shim) {
+    Start-Process -FilePath $shim
+} else {
+    Write-Host "Could not auto-launch (shim missing). In a NEW terminal run:  isitdone" -ForegroundColor Yellow
+}
