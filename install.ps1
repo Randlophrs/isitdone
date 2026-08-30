@@ -84,9 +84,9 @@ if (Test-Path "$feDir\package.json") {
         Step "Building frontend (UI)"
         Push-Location $feDir
         try {
-            $p = Start-Process npm -ArgumentList "install" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog
+            $p = Start-Process "cmd.exe" -ArgumentList "/c","npm","install" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog
             if ($p.ExitCode -ne 0) { throw "npm install failed" }
-            $p = Start-Process npm -ArgumentList "run","build" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog
+            $p = Start-Process "cmd.exe" -ArgumentList "/c","npm","run","build" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog
             if ($p.ExitCode -ne 0) { throw "npm run build failed" }
         } catch {
             Write-Warning "Frontend build failed (log: $ErrLog). API still works; UI will be missing until you build it."
