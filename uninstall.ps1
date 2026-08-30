@@ -11,21 +11,24 @@
 param()
 
 $ErrorActionPreference = "Stop"
+$Repo = $PSScriptRoot
 $DestDir = "$env:LOCALAPPDATA\isitdone"
-$Shim = "$DestDir\isitdone.pyw"
 $CloneDir = "$env:LOCALAPPDATA\isitdone-repo"
 
-# 1. Remove shim + PATH entry (fixed paths - work even when run via irm | iex,
+# 1. Remove PATH entry (fixed paths - work even when run via irm | iex,
 #    where $PSScriptRoot is empty because the script has no file backing).
-if (Test-Path $Shim) {
-    Remove-Item $Shim -Force
-    Write-Host "Removed shim $Shim"
+# The PATH entry is the venv Scripts dir (where `isitdone` GUI-script lives),
+# not a shim folder.
+$venvScripts = if ($Repo -and (Test-Path "$Repo\backend\.venv\Scripts")) {
+    "$Repo\backend\.venv\Scripts"
+} else {
+    "$CloneDir\backend\.venv\Scripts"
 }
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if (($userPath -split ";") -contains $DestDir) {
-    $newPath = ($userPath -split ";") | Where-Object { $_ -and $_ -ne $DestDir }
+if (($userPath -split ";") -contains $venvScripts) {
+    $newPath = ($userPath -split ";") | Where-Object { $_ -and $_ -ne $venvScripts }
     [Environment]::SetEnvironmentVariable("Path", ($newPath -join ";"), "User")
-    Write-Host "Removed $DestDir from user PATH."
+    Write-Host "Removed $venvScripts from user PATH."
 }
 
 # 2. Remove the cloned repo (heavy folder) plus its venv. This is the path taken

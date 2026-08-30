@@ -53,7 +53,7 @@ Buka PowerShell:
 irm https://raw.githubusercontent.com/Randlophrs/isitdone/main/uninstall.ps1 | iex
 ```
 
-Perintah ini hapus perintah `isitdone`, shim, entry PATH, dan folder clone `%LOCALAPPDATA%\isitdone-repo` beserta venv-nya. Riwayatmu di `%APPDATA%\isitdone\data` tetap utuh.
+Perintah ini hapus perintah `isitdone`, entry PATH, dan folder clone `%LOCALAPPDATA%\isitdone-repo` beserta venv-nya. Riwayatmu di `%APPDATA%\isitdone\data` tetap utuh.
 
 ## Data
 

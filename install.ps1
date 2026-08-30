@@ -97,35 +97,17 @@ if (Test-Path "$feDir\package.json") {
 }
 
 Step "Adding launcher to PATH"
-# Shim on PATH: a .pyw (runs under pythonw - no console, no flash) that spawns
-# the real launcher.pyw with DETACHED_PROCESS so it survives terminal close and
-# never shows a console frame. This is the flash-free standard used by GUI
-# launchers. .PYW is in PATHEXT; we delete any leftover .cmd/.vbs so .pyw wins
-# resolution (PATHEXT lists .CMD/.VBS before .PYW).
-New-Item -ItemType Directory -Force -Path $DestDir | Out-Null
-$oldCmd = "$DestDir\isitdone.cmd"
-$oldVbs = "$DestDir\isitdone.vbs"
-if (Test-Path $oldCmd) { Remove-Item $oldCmd -Force }
-if (Test-Path $oldVbs) { Remove-Item $oldVbs -Force }
-$shim = "$DestDir\isitdone.pyw"
-$venvPyw = "$Repo\backend\.venv\Scripts\pythonw.exe"
-$launcher = "$Repo\launcher.pyw"
-$pywContent = @"
-import subprocess
-from pathlib import Path
-
-REPO = Path(r"{0}")
-PYW = str(REPO / "backend" / ".venv" / "Scripts" / "pythonw.exe")
-LAUNCHER = str(REPO / "launcher.pyw")
-subprocess.Popen([PYW, LAUNCHER], creationflags=0x00000008)
-"@ -f $Repo
-Set-Content -Path $shim -Value $pywContent
-Write-Host "   Created shim -> $shim" -ForegroundColor Green
-
+# `pip install -e .` registers `isitdone` as a GUI-script (.exe, no console
+# window) because [project.gui-scripts] is set in pyproject.toml. Putting the
+# venv's Scripts dir on PATH is all we need - no separate shim, so no flash on
+# launch. The leftover .pyw/.cmd/.vbs shim from older installs is removed.
+$oldShim = "$DestDir\isitdone.pyw"
+if (Test-Path $oldShim) { Remove-Item $oldShim -Force }
+$venvScripts = "$Repo\backend\.venv\Scripts"
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if (($userPath -split ";") -notcontains $DestDir) {
-    [Environment]::SetEnvironmentVariable("Path", "$userPath;$DestDir", "User")
-    Write-Host "   Added to user PATH." -ForegroundColor Green
+if (($userPath -split ";") -notcontains $venvScripts) {
+    [Environment]::SetEnvironmentVariable("Path", "$userPath;$venvScripts", "User")
+    Write-Host "   Added venv Scripts to user PATH." -ForegroundColor Green
 } else {
     Write-Host "   Already on PATH." -ForegroundColor Green
 }
@@ -135,8 +117,9 @@ Write-Host ""
 Write-Host "Done. Launching isitdone..." -ForegroundColor Green
 
 # Launch immediately so the user gets the app without reopening a terminal.
-# Use pythonw directly (not the shim, which wraps `start`) to avoid a double
-# spawn. pythonw + launcher.pyw = no console, detached from this shell.
+# pythonw + launcher.pyw = no console, detached from this shell.
+$venvPyw = "$Repo\backend\.venv\Scripts\pythonw.exe"
+$launcher = "$Repo\launcher.pyw"
 if (Test-Path $venvPyw) {
     Start-Process -FilePath $venvPyw -ArgumentList $launcher
 } else {

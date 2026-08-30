@@ -29,12 +29,15 @@ def free_port(host: str, port: str) -> None:
     # Kill whatever already holds our port so the new server starts clean and
     # (re)mounts the frontend. Otherwise a stale server from a previous run -
     # one started before `dist/` existed - keeps port 8000 and answers "/" 404.
+    # netstat/taskkill are console apps; without CREATE_NO_WINDOW a no-console
+    # parent (this .pyw) spawns a console window that flashes for one frame.
     try:
         out = subprocess.run(
             ["netstat", "-ano", "-p", "TCP"],
             capture_output=True,
             text=True,
             timeout=10,
+            creationflags=CREATE_NO_WINDOW,
         ).stdout
         for line in out.splitlines():
             parts = line.split()
@@ -44,6 +47,7 @@ def free_port(host: str, port: str) -> None:
                     ["taskkill", "/PID", pid, "/T", "/F"],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
+                    creationflags=CREATE_NO_WINDOW,
                 )
     except Exception:
         pass
@@ -68,11 +72,13 @@ def start_server() -> subprocess.Popen:
 def stop_server(server: subprocess.Popen) -> None:
     # Kill the whole process tree, not just the top pid: uvicorn can spawn
     # helpers, and a lone terminate() leaves orphans running after we exit.
+    # taskkill is a console app; CREATE_NO_WINDOW keeps the tray-quit flash-free.
     pid = server.pid
     subprocess.run(
         ["taskkill", "/PID", str(pid), "/T", "/F"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        creationflags=CREATE_NO_WINDOW,
     )
     try:
         server.wait(timeout=5)
@@ -112,7 +118,13 @@ def main() -> None:
     server = start_server()
 
     def open_app(_=None):
-        webbrowser.open(URL)
+        # os.startfile is the native, console-free way to open a URL on Windows.
+        # webbrowser.open falls back to `cmd /c start` here, which flashes a
+        # console window for one frame - exactly the flash we're killing.
+        if os.name == "nt":
+            os.startfile(URL)
+        else:
+            webbrowser.open(URL)
 
     def quit_app(icon):
         icon.stop()

@@ -19,7 +19,7 @@ dependencies = [
     "Pillow>=10.0",
 ]
 
-[project.scripts]
+[project.gui-scripts]
 isitdone = "launcher:main"
 
 [tool.setuptools]
