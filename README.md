@@ -6,7 +6,7 @@ Tidak ada login. Tidak ada cloud. Datamu tetap di komputermu sendiri sebagai fil
 
 ## Kenapa ini ada
 
-Setiap hari aku bolak-balik nanya: "Daily game ini sudah dikerjakan belum? Shopee check-in sudah? Duolingo hari ini?" Jawabannya selalu "kayaknya sudah, tapi lupa." Aplikasi ini lahir dari pertanyaan itu. Ia tidak memaksamu kerja di jam tertentu. Selama rutinitas selesai dalam periodenya, centang saja.
+Setiap hari aku bolak-balik nanya: "Olahraga pagi ini sudah? Baca buku sudah? Belajar hal baru hari ini?" Jawabannya selalu "kayaknya sudah, tapi lupa." Aplikasi ini lahir dari pertanyaan itu. Ia tidak memaksamu kerja di jam tertentu. Selama rutinitas selesai dalam periodenya, centang saja.
 
 ## Fitur
 
