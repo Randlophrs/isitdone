@@ -117,6 +117,5 @@ if (($userPath -split ";") -notcontains $DestDir) {
 
 Write-Progress -Activity "Installing isitdone" -Completed
 Write-Host ""
-Write-Host "Done. Open a NEW terminal and run:  isitdone" -ForegroundColor Green
+Write-Host "Done. isitdone is installed. Open a NEW terminal and run:  isitdone" -ForegroundColor Green
 Write-Host ""
-Read-Host -Prompt "Press Enter to close this window"
