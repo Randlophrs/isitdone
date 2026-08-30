@@ -105,7 +105,8 @@ def make_icon():
 
     img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    d.ellipse((4, 4, 60, 60), fill=(34, 197, 94, 255))
+    # Match the web app accent (#6366F1) so tray + app icons stay consistent.
+    d.ellipse((4, 4, 60, 60), fill=(99, 102, 241, 255))
     d.line((20, 33, 29, 44), fill=(255, 255, 255, 255), width=6)
     d.line((29, 44, 46, 22), fill=(255, 255, 255, 255), width=6)
     return img

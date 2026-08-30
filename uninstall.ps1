@@ -54,6 +54,13 @@ if (Test-Path $CloneDir) {
     }
 }
 
+# Remove the Start Menu shortcut we own (Windows search entry).
+$link = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\isitdone.lnk"
+if (Test-Path $link) {
+    Remove-Item $link -Force
+    Write-Host "Removed Start Menu shortcut."
+}
+
 Write-Host ""
 Write-Host "Done. Open a NEW terminal - 'isitdone' will no longer be available."
 Write-Host "User data kept at: $env:APPDATA\isitdone\data"

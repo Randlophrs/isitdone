@@ -74,6 +74,31 @@ if ($p.ExitCode -ne 0) {
     exit 1
 }
 
+# pip's GUI-script wrapper ships with the Python launcher icon. Replace it with
+# our green-checkmark icon so it reads right in Windows search / Start menu.
+# (This .exe is rebuilt by `pip install -e .` above, so it must run after it.)
+$setIcon = "$Repo\scripts\set_exe_icon.py"
+if (Test-Path $setIcon) {
+    Start-Process "$venvPy" -ArgumentList $setIcon -Wait -NoNewWindow -PassThru -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog | Out-Null
+}
+
+# Start Menu shortcut. pip's editable install leaves one pointing at pythonw.exe
+# with the Python icon (that's what Windows search shows), so we own it: point at
+# our isitdone.exe and give it the green-checkmark icon.
+$isitdoneExe = "$Repo\backend\.venv\Scripts\isitdone.exe"
+$isitdoneIco = "$Repo\assets\isitdone.ico"
+$link = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\isitdone.lnk"
+if (Test-Path $isitdoneExe) {
+    $ws = New-Object -ComObject WScript.Shell
+    $lnk = $ws.CreateShortcut($link)
+    $lnk.TargetPath = $isitdoneExe
+    $lnk.WorkingDirectory = $Repo
+    $lnk.IconLocation = "$isitdoneIco,0"
+    $lnk.Description = "isitdone - local periodic checklist"
+    $lnk.Save()
+    Write-Host "   Created Start Menu shortcut." -ForegroundColor Green
+}
+
 # Build the frontend so the server has something to serve at "/".
 # `dist/` is gitignored, so a fresh clone has no SPA until we build it here.
 $feDir = "$Repo\frontend"
