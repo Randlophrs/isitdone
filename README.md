@@ -38,7 +38,7 @@ Data utama disimpan secara lokal menggunakan SQLite melalui backend Python FastA
 - [Persyaratan Sistem](#persyaratan-sistem)
 - [Cara Menjalankan](#cara-menjalankan)
 - [Production Lokal](#production-lokal)
-- [Packaging untuk User Awam](#packaging-untuk-user-awam)
+- [Install & Menjalankan `isitdone`](#install--menjalankan-isitdone)
 - [Backup dan Restore](#backup-dan-restore)
 - [Konfigurasi](#konfigurasi)
 - [CORS](#cors)
@@ -260,10 +260,9 @@ Belum dilakukan → ○
 - Mode production lokal.
 - Script start untuk Windows.
 - Script start untuk Linux/macOS.
-- Portable package.
-- Build executable backend menggunakan PyInstaller.
+- Command `isitdone` yang terdaftar di PATH.
+- System tray dengan menu Open dan Quit (tanpa jendela terminal).
 - Opsi self-hosting.
-- Opsi pembungkusan desktop di masa depan menggunakan Tauri.
 
 ---
 
@@ -500,7 +499,7 @@ Semua routine selesai 🎉
 - React Testing Library.
 - Playwright, opsional.
 - GitHub Actions, opsional.
-- PyInstaller untuk packaging backend.
+- pystray + Pillow untuk system tray (launcher).
 
 ### Deployment
 
@@ -1469,150 +1468,48 @@ Jika data directory gagal dibuat, backend harus menghentikan startup dengan pesa
 
 ---
 
-## Packaging untuk User Awam
+## Install & Menjalankan `isitdone`
 
-Pada development, user perlu memasang Python dan Node.js. Untuk distribusi kepada user awam, dependency tersebut sebaiknya dibundel.
+`isitdone` butuh **Python 3.11+** (Node.js hanya untuk build frontend saat development). Setelah install, cukup ketik `isitdone` di terminal — server lokal jalan di background, ikon **system tray** muncul, dan browser otomatis kebuka. Tidak ada jendela terminal yang menggantung.
 
-### PyInstaller
-
-PyInstaller dapat membungkus aplikasi Python dan dependency-nya menjadi executable sehingga user tidak perlu memasang Python secara manual.
-
-Install:
+### Clone & install
 
 ```bash
-pip install pyinstaller
+git clone https://github.com/username/isitdone.git
+cd isitdone
+
+# cara cepat (Windows): siapkan venv, install dependensi, daftarkan command `isitdone`
+powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
-Build backend:
+Atau manual:
 
 ```bash
-pyinstaller \
-  --onefile \
-  --name isitdone-server \
-  backend/run.py
+python -m venv backend/.venv
+backend/.venv/Scripts/activate
+pip install -r backend/requirements.txt
+pip install -e .
 ```
 
-Pada Windows:
+### Jalankan
+
+Buka terminal baru, lalu:
 
 ```bash
-pyinstaller ^
-  --onefile ^
-  --name isitdone-server ^
-  backend\run.py
+isitdone
 ```
 
-Hasil executable berada di:
+- Server berjalan di `http://127.0.0.1:8000`.
+- Ikon tray (centang hijau) muncul di taskbar.
+- Browser terbuka otomatis ke dashboard.
+- **Quit** lewat menu tray → Quit (menghentikan server).
 
-```text
-dist/isitdone-server
-```
+### Catatan
 
-atau pada Windows:
-
-```text
-dist/isitdone-server.exe
-```
-
-PyInstaller dapat membuat package executable yang berjalan tanpa user harus memasang interpreter Python atau module secara terpisah. [119]
-
-### Struktur portable package
-
-```text
-isitdone/
-├── isitdone-server.exe
-├── frontend/
-│   └── dist/
-├── start.bat
-└── README.txt
-```
-
-Database tidak perlu diletakkan di dalam package. Database dibuat otomatis di data directory user:
-
-```text
-%APPDATA%\isitdone\data\
-```
-
-### Contoh `start.bat`
-
-```bat
-@echo off
-setlocal
-
-cd /d "%~dp0"
-
-start "" /b isitdone-server.exe
-
-:wait_for_server
-powershell -NoProfile -Command ^
-  "try { Invoke-WebRequest -Uri 'http://127.0.0.1:8000/api/health' -UseBasicParsing | Out-Null; exit 0 } catch { exit 1 }"
-
-if errorlevel 1 (
-    timeout /t 1 /nobreak > nul
-    goto wait_for_server
-)
-
-start "" "http://127.0.0.1:8000"
-
-endlocal
-```
-
-### User flow
-
-```text
-Download ZIP
-        ↓
-Extract
-        ↓
-Klik start.bat
-        ↓
-Backend membuat data directory
-        ↓
-SQLite database dibuat
-        ↓
-Browser terbuka
-        ↓
-Aplikasi siap digunakan
-```
-
-User tidak perlu:
-
-- Membuat folder secara manual.
-- Membuat database secara manual.
-- Menjalankan migration.
-- Menginstal SQLite.
-- Menginstal Python.
-- Menginstal Node.js.
-- Mengatur permission database.
-
-### Backend lifecycle
-
-Launcher bertanggung jawab untuk:
-
-1. Menjalankan backend lokal.
-2. Menunggu endpoint health tersedia.
-3. Membuka browser.
-4. Menampilkan pesan jika backend gagal.
-5. Menghentikan backend ketika aplikasi ditutup, jika memungkinkan.
-
-Backend sebaiknya hanya bind ke:
-
-```text
-127.0.0.1
-```
-
-agar API tidak dapat diakses dari perangkat lain secara default.
-
-### Pengembangan distribusi berikutnya
-
-- Installer Windows.
-- Shortcut Start Menu.
-- Portable executable.
-- System tray.
-- Auto-start lokal.
-- Auto-update.
-- Build Linux AppImage.
-- Build macOS application.
-- Desktop wrapper menggunakan Tauri.
+- `install.ps1` menaruh shim `isitdone.cmd` di `%LOCALAPPDATA%\isitdone` dan menambahkannya ke user PATH, sehingga command `isitdone` bisa dipanggil dari terminal mana pun. Buka terminal baru setelah install agar PATH terbaca.
+- `launcher.pyw` adalah entry point `isitdone`: menjalankan backend lewat venv, membuka browser, dan menampilkan tray. Disimpan sebagai `.pyw` agar Windows tidak menampilkan console window.
+- Data tetap di SQLite di data directory user (`%APPDATA%\isitdone\data\`).
+- Untuk development (frontend hot-reload), gunakan `npm run dev` seperti di atas — `isitdone` ditujukan untuk penggunaan lokal production.
 
 ---
 

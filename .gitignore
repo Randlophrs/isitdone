@@ -6,6 +6,9 @@ venv/
 *.sqlite
 *.sqlite-journal
 *.sqlite-*
+*.egg-info/
+*.spec
+*.log
 
 # Node
 node_modules/
