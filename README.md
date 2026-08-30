@@ -1223,12 +1223,6 @@ isitdone/
 │   ├── tsconfig.json
 │   └── vite.config.ts
 │
-├── scripts/
-│   ├── dev.bat
-│   ├── start.bat
-│   ├── dev.sh
-│   └── start.sh
-│
 ├── data/
 │   └── .gitkeep
 ├── .env.example
@@ -1269,7 +1263,7 @@ Pada mode portable atau packaged:
 ### Clone repository
 
 ```bash
-git clone https://github.com/username/isitdone.git
+git clone https://github.com/Randlophrs/isitdone.git
 cd isitdone
 ```
 
@@ -1472,10 +1466,21 @@ Jika data directory gagal dibuat, backend harus menghentikan startup dengan pesa
 
 `isitdone` butuh **Python 3.11+** (Node.js hanya untuk build frontend saat development). Setelah install, cukup ketik `isitdone` di terminal — server lokal jalan di background, ikon **system tray** muncul, dan browser otomatis kebuka. Tidak ada jendela terminal yang menggantung.
 
+### Install tanpa clone (Windows)
+
+Buka PowerShell dan jalankan satu baris — script akan meng-clone repo ke
+`%LOCALAPPDATA%\isitdone-repo`, menyiapkan venv, lalu mendaftarkan command `isitdone`:
+
+```powershell
+irm https://raw.githubusercontent.com/username/isitdone/main/install.ps1 | iex
+```
+
+Butuh **Git** dan **Python 3.11+** terpasang.
+
 ### Clone & install
 
 ```bash
-git clone https://github.com/username/isitdone.git
+git clone https://github.com/Randlophrs/isitdone.git
 cd isitdone
 
 # cara cepat (Windows): siapkan venv, install dependensi, daftarkan command `isitdone`

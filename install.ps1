@@ -8,6 +8,24 @@ $ErrorActionPreference = "Stop"
 $Repo = $PSScriptRoot
 $DestDir = "$env:LOCALAPPDATA\isitdone"
 
+# If run from a downloaded copy (no repo beside this script), clone the repo
+# into a fixed location first so the source is available for the install.
+if (-not (Test-Path "$Repo\backend\app\main.py")) {
+    $CloneDir = "$env:LOCALAPPDATA\isitdone-repo"
+    Write-Host "No source found next to this script - cloning repo to $CloneDir"
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        Write-Error "git not found. Install Git, or clone the repo manually and run install.ps1 from it."
+        exit 1
+    }
+    if (Test-Path "$CloneDir\.git") {
+        cmd /c "git -C `"$CloneDir`" pull --ff-only" 2>$null
+    } else {
+        cmd /c "git clone https://github.com/Randlophrs/isitdone.git `"$CloneDir`""
+    }
+    & "$CloneDir\install.ps1"
+    exit 0
+}
+
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
     Write-Error "Python 3.11+ not found. Install Python, then re-run this script."
     exit 1
