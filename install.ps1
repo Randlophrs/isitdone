@@ -74,17 +74,11 @@ if ($p.ExitCode -ne 0) {
     exit 1
 }
 
-# pip's GUI-script wrapper ships with the Python launcher icon. Replace it with
-# our purple-checkmark icon so it reads right in Windows search / Start menu.
-# (This .exe is rebuilt by `pip install -e .` above, so it must run after it.)
-$setIcon = "$Repo\scripts\set_exe_icon.py"
-if (Test-Path $setIcon) {
-    Start-Process "$venvPy" -ArgumentList $setIcon -Wait -NoNewWindow -PassThru -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog | Out-Null
-}
-
-# Start Menu shortcut. pip's editable install leaves one pointing at pythonw.exe
-# with the Python icon (that's what Windows search shows), so we own it: point at
-# our isitdone.exe and give it the purple-checkmark icon.
+# Start Menu shortcut is what Windows search shows. pip's editable install
+# leaves one pointing at pythonw.exe with the Python icon, so we own it: point
+# at our isitdone.exe and give it the purple-checkmark icon. We intentionally do
+# NOT rewrite the .exe's icon resource - editing the editable gui-script exe
+# can corrupt it ("Unable to find an appended archive").
 $isitdoneExe = "$Repo\backend\.venv\Scripts\isitdone.exe"
 $isitdoneIco = "$Repo\assets\isitdone.ico"
 $link = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\isitdone.lnk"
@@ -148,14 +142,14 @@ Write-Host ""
 Write-Host "Done. Launching isitdone..." -ForegroundColor Green
 
 # Launch immediately so the user gets the app without reopening a terminal.
-# Prefer the GUI-script exe (on PATH, no console); fall back to pythonw +
-# launcher.pyw if it is missing for any reason.
-if (Test-Path $isitdoneExe) {
-    Start-Process -FilePath $isitdoneExe
-} elseif (Test-Path $venvPyw) {
+# Use pythonw + launcher.pyw directly (never the GUI-script .exe): the exe is
+# only for PATH/Windows-search, and embedding our icon into it can occasionally
+# leave it in a state that errors on launch. pythonw + launcher.pyw is the
+# reliable, console-free, detached path.
+$venvPyw = "$Repo\backend\.venv\Scripts\pythonw.exe"
+$launcher = "$Repo\launcher.pyw"
+if (Test-Path $venvPyw) {
     Start-Process -FilePath $venvPyw -ArgumentList $launcher
 } else {
     Write-Host "Could not auto-launch (venv missing). In a NEW terminal run:  isitdone" -ForegroundColor Yellow
 }
-$venvPyw = "$Repo\backend\.venv\Scripts\pythonw.exe"
-$launcher = "$Repo\launcher.pyw"
