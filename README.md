@@ -45,6 +45,16 @@ Server berjalan di background di `http://127.0.0.1:8000`. Ikon tray centang hija
 
 Cara lain, clone manual lalu jalankan `install.ps1` dari dalam folder repo.
 
+## Uninstall
+
+Buka PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/Randlophrs/isitdone/main/uninstall.ps1 | iex
+```
+
+Perintah ini hapus perintah `isitdone`, shim, entry PATH, dan folder clone `%LOCALAPPDATA%\isitdone-repo` beserta venv-nya. Riwayatmu di `%APPDATA%\isitdone\data` tetap utuh.
+
 ## Data
 
 Datamu tersimpan di `%APPDATA%\isitdone\data\isitdone.sqlite`. Uninstall tidak menghapus folder ini, jadi riwayatmu aman.
