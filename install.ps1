@@ -78,3 +78,5 @@ if (($userPath -split ";") -notcontains $DestDir) {
 
 Write-Host ""
 Write-Host "Done. Open a NEW terminal and run:  isitdone"
+Write-Host ""
+Read-Host -Prompt "Press Enter to close this window"
