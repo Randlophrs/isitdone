@@ -97,14 +97,16 @@ if (Test-Path "$feDir\package.json") {
 }
 
 Step "Adding launcher to PATH"
-# Shim on PATH: a .cmd that activates the venv and runs `isitdone`.
+# Shim on PATH: launch launcher.pyw with the venv pythonw.exe, detached via
+# `start` so closing the terminal does NOT kill the app. The tray Quit still
+# stops the server (launcher.pyw handles that). pythonw = no console window.
 New-Item -ItemType Directory -Force -Path $DestDir | Out-Null
 $shim = "$DestDir\isitdone.cmd"
-$venvActivate = "$Repo\backend\.venv\Scripts\activate.bat"
+$venvPyw = "$Repo\backend\.venv\Scripts\pythonw.exe"
+$launcher = "$Repo\launcher.pyw"
 $line1 = "@echo off"
-$line2 = 'call "{0}"' -f $venvActivate
-$line3 = "isitdone"
-Set-Content -Path $shim -Value ($line1, $line2, $line3)
+$line2 = 'start "" "{0}" "{1}"' -f $venvPyw, $launcher
+Set-Content -Path $shim -Value ($line1, $line2)
 Write-Host "   Created shim -> $shim" -ForegroundColor Green
 
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -120,10 +122,10 @@ Write-Host ""
 Write-Host "Done. Launching isitdone..." -ForegroundColor Green
 
 # Launch immediately so the user gets the app without reopening a terminal.
-# Run the shim by absolute path - the freshly added PATH entry is not visible
-# in this same process, but the file exists regardless.
-if (Test-Path $shim) {
-    Start-Process -FilePath $shim
+# Use pythonw directly (not the shim, which wraps `start`) to avoid a double
+# spawn. pythonw + launcher.pyw = no console, detached from this shell.
+if (Test-Path $venvPyw) {
+    Start-Process -FilePath $venvPyw -ArgumentList $launcher
 } else {
-    Write-Host "Could not auto-launch (shim missing). In a NEW terminal run:  isitdone" -ForegroundColor Yellow
+    Write-Host "Could not auto-launch (venv missing). In a NEW terminal run:  isitdone" -ForegroundColor Yellow
 }
