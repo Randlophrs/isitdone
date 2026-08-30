@@ -30,10 +30,8 @@ Butuh **Python 3.11+** dan **Git**. Node.js hanya dipakai saat install untuk mem
 Buka PowerShell, jalankan satu baris:
 
 ```powershell
-irm https://raw.githubusercontent.com/Randlophrs/isitdone/main/install.ps1 | iex
+powershell -NoExit -Command "irm https://raw.githubusercontent.com/Randlophrs/isitdone/main/install.ps1 | iex"
 ```
-
-Script meng-clone repo, menyiapkan virtual environment, menginstal dependensi, membangun frontend, lalu mendaftarkan perintah `isitdone` ke PATH.
 
 Buka terminal baru, ketik:
 
