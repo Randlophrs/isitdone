@@ -97,20 +97,29 @@ if (Test-Path "$feDir\package.json") {
 }
 
 Step "Adding launcher to PATH"
-# Shim on PATH: a .vbs that launches launcher.pyw with pythonw.exe hidden
-# (window style 0). A .cmd would flash a console host for one frame; .vbs does
-# not. `isitdone` still resolves because .VBS is in the default PATHEXT. The
-# tray Quit stops the server (launcher.pyw handles that).
-# Remove any stale .cmd shim: PATHEXT lists .CMD before .VBS, so a leftover
-# .cmd would win resolution and re-introduce the console flash.
+# Shim on PATH: a .pyw (runs under pythonw - no console, no flash) that spawns
+# the real launcher.pyw with DETACHED_PROCESS so it survives terminal close and
+# never shows a console frame. This is the flash-free standard used by GUI
+# launchers. .PYW is in PATHEXT; we delete any leftover .cmd/.vbs so .pyw wins
+# resolution (PATHEXT lists .CMD/.VBS before .PYW).
 New-Item -ItemType Directory -Force -Path $DestDir | Out-Null
 $oldCmd = "$DestDir\isitdone.cmd"
+$oldVbs = "$DestDir\isitdone.vbs"
 if (Test-Path $oldCmd) { Remove-Item $oldCmd -Force }
-$shim = "$DestDir\isitdone.vbs"
+if (Test-Path $oldVbs) { Remove-Item $oldVbs -Force }
+$shim = "$DestDir\isitdone.pyw"
 $venvPyw = "$Repo\backend\.venv\Scripts\pythonw.exe"
 $launcher = "$Repo\launcher.pyw"
-$runLine = 'WshShell.Run """{0}""" """{1}""", 0, False' -f $venvPyw, $launcher
-Set-Content -Path $shim -Value (@('Set WshShell = CreateObject("WScript.Shell")', $runLine))
+$pywContent = @"
+import subprocess
+from pathlib import Path
+
+REPO = Path(r"{0}")
+PYW = str(REPO / "backend" / ".venv" / "Scripts" / "pythonw.exe")
+LAUNCHER = str(REPO / "launcher.pyw")
+subprocess.Popen([PYW, LAUNCHER], creationflags=0x00000008)
+"@ -f $Repo
+Set-Content -Path $shim -Value $pywContent
 Write-Host "   Created shim -> $shim" -ForegroundColor Green
 
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
