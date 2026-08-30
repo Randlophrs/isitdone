@@ -12,7 +12,7 @@ param()
 
 $ErrorActionPreference = "Stop"
 $DestDir = "$env:LOCALAPPDATA\isitdone"
-$Shim = "$DestDir\isitdone.cmd"
+$Shim = "$DestDir\isitdone.vbs"
 $CloneDir = "$env:LOCALAPPDATA\isitdone-repo"
 
 # 1. Remove shim + PATH entry (fixed paths - work even when run via irm | iex,

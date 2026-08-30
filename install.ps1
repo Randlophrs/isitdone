@@ -97,16 +97,16 @@ if (Test-Path "$feDir\package.json") {
 }
 
 Step "Adding launcher to PATH"
-# Shim on PATH: launch launcher.pyw with the venv pythonw.exe, detached via
-# `start` so closing the terminal does NOT kill the app. The tray Quit still
-# stops the server (launcher.pyw handles that). pythonw = no console window.
+# Shim on PATH: a .vbs that launches launcher.pyw with pythonw.exe hidden
+# (window style 0). A .cmd would flash a console host for one frame; .vbs does
+# not. `isitdone` still resolves because .VBS is in the default PATHEXT. The
+# tray Quit stops the server (launcher.pyw handles that).
 New-Item -ItemType Directory -Force -Path $DestDir | Out-Null
-$shim = "$DestDir\isitdone.cmd"
+$shim = "$DestDir\isitdone.vbs"
 $venvPyw = "$Repo\backend\.venv\Scripts\pythonw.exe"
 $launcher = "$Repo\launcher.pyw"
-$line1 = "@echo off"
-$line2 = 'start "" "{0}" "{1}"' -f $venvPyw, $launcher
-Set-Content -Path $shim -Value ($line1, $line2)
+$runLine = 'WshShell.Run """{0}""" """{1}""", 0, False' -f $venvPyw, $launcher
+Set-Content -Path $shim -Value (@('Set WshShell = CreateObject("WScript.Shell")', $runLine))
 Write-Host "   Created shim -> $shim" -ForegroundColor Green
 
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
