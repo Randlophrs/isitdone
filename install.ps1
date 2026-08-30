@@ -18,9 +18,13 @@ if (-not (Test-Path "$Repo\backend\app\main.py")) {
         exit 1
     }
     if (Test-Path "$CloneDir\.git") {
-        cmd /c "git -C `"$CloneDir`" pull --ff-only" 2>$null
+        $p = Start-Process git -ArgumentList "-C","$CloneDir","pull","--ff-only" -Wait -NoNewWindow -PassThru
     } else {
-        cmd /c "git clone https://github.com/Randlophrs/isitdone.git `"$CloneDir`""
+        $p = Start-Process git -ArgumentList "clone","https://github.com/Randlophrs/isitdone.git","$CloneDir" -Wait -NoNewWindow -PassThru
+        if ($p.ExitCode -ne 0) {
+            Write-Error "git clone failed. Check network / repo access, then retry."
+            exit 1
+        }
     }
     & "$CloneDir\install.ps1"
     exit 0
@@ -35,11 +39,23 @@ if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
 $venvPy = "$Repo\backend\.venv\Scripts\python.exe"
 if (-not (Test-Path $venvPy)) {
     Write-Host "Creating virtualenv..."
-    python -m venv "$Repo\backend\.venv"
+    $p = Start-Process python -ArgumentList "-m","venv","$Repo\backend\.venv" -Wait -NoNewWindow -PassThru
+    if ($p.ExitCode -ne 0) {
+        Write-Error "Failed to create virtualenv."
+        exit 1
+    }
 }
 
-cmd /c "`"$venvPy`" -m pip install -q -r `"$Repo\backend\requirements.txt`""
-cmd /c "`"$venvPy`" -m pip install -e `"$Repo`""
+$p = Start-Process "$venvPy" -ArgumentList "-m","pip","install","-q","-r","$Repo\backend\requirements.txt" -Wait -NoNewWindow -PassThru
+if ($p.ExitCode -ne 0) {
+    Write-Warning "pip install of requirements failed; check network/Python."
+    exit 1
+}
+$p = Start-Process "$venvPy" -ArgumentList "-m","pip","install","-e","$Repo" -Wait -NoNewWindow -PassThru
+if ($p.ExitCode -ne 0) {
+    Write-Warning "pip install -e . failed."
+    exit 1
+}
 
 # Shim on PATH: a .cmd that activates the venv and runs `isitdone`.
 New-Item -ItemType Directory -Force -Path $DestDir | Out-Null
