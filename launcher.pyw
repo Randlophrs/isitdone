@@ -41,6 +41,24 @@ def start_server() -> subprocess.Popen:
     )
 
 
+def stop_server(server: subprocess.Popen) -> None:
+    # Kill the whole process tree, not just the top pid: uvicorn can spawn
+    # helpers, and a lone terminate() leaves orphans running after we exit.
+    pid = server.pid
+    subprocess.run(
+        ["taskkill", "/PID", str(pid), "/T", "/F"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        server.wait(timeout=5)
+    except Exception:
+        try:
+            server.kill()
+        except Exception:
+            pass
+
+
 def wait_for_health(timeout: float = 30.0) -> bool:
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -73,11 +91,7 @@ def main() -> None:
 
     def quit_app(icon):
         icon.stop()
-        server.terminate()
-        try:
-            server.wait(timeout=5)
-        except Exception:
-            server.kill()
+        stop_server(server)
 
     threading.Thread(
         target=lambda: (wait_for_health() and open_app()), daemon=True
