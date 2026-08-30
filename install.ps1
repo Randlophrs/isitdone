@@ -40,7 +40,7 @@ if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-$total = 5
+$total = 6
 $step = 0
 function Step($name) {
     $script:step++
@@ -72,6 +72,28 @@ $p = Start-Process "$venvPy" -ArgumentList "-m","pip","install","-q","-e","$Repo
 if ($p.ExitCode -ne 0) {
     Write-Error "pip install -e . failed (log: $ErrLog)."
     exit 1
+}
+
+# Build the frontend so the server has something to serve at "/".
+# `dist/` is gitignored, so a fresh clone has no SPA until we build it here.
+$feDir = "$Repo\frontend"
+if (Test-Path "$feDir\package.json") {
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        Write-Warning "Node.js not found - skipping frontend build. Install Node to get the UI; API still works."
+    } else {
+        Step "Building frontend (UI)"
+        Push-Location $feDir
+        try {
+            $p = Start-Process npm -ArgumentList "install" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog
+            if ($p.ExitCode -ne 0) { throw "npm install failed" }
+            $p = Start-Process npm -ArgumentList "run","build" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog
+            if ($p.ExitCode -ne 0) { throw "npm run build failed" }
+        } catch {
+            Write-Warning "Frontend build failed (log: $ErrLog). API still works; UI will be missing until you build it."
+        } finally {
+            Pop-Location
+        }
+    }
 }
 
 Step "Adding launcher to PATH"
