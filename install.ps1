@@ -101,7 +101,11 @@ Step "Adding launcher to PATH"
 # (window style 0). A .cmd would flash a console host for one frame; .vbs does
 # not. `isitdone` still resolves because .VBS is in the default PATHEXT. The
 # tray Quit stops the server (launcher.pyw handles that).
+# Remove any stale .cmd shim: PATHEXT lists .CMD before .VBS, so a leftover
+# .cmd would win resolution and re-introduce the console flash.
 New-Item -ItemType Directory -Force -Path $DestDir | Out-Null
+$oldCmd = "$DestDir\isitdone.cmd"
+if (Test-Path $oldCmd) { Remove-Item $oldCmd -Force }
 $shim = "$DestDir\isitdone.vbs"
 $venvPyw = "$Repo\backend\.venv\Scripts\pythonw.exe"
 $launcher = "$Repo\launcher.pyw"
