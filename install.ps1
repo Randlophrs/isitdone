@@ -7,8 +7,10 @@ param()
 $ErrorActionPreference = "Stop"
 $Repo = $PSScriptRoot
 $DestDir = "$env:LOCALAPPDATA\isitdone"
-$LogFile = "$env:TEMP\isitdone-install.log"
-"" | Set-Content -Path $LogFile   # fresh log for this run
+$OutLog = "$env:TEMP\isitdone-install.out"
+$ErrLog = "$env:TEMP\isitdone-install.err"
+"" | Set-Content -Path $OutLog
+"" | Set-Content -Path $ErrLog
 
 # If run from a downloaded copy (no repo beside this script), clone the repo
 # into a fixed location first so the source is available for the install.
@@ -21,9 +23,9 @@ if (-not (Test-Path "$Repo\backend\app\main.py")) {
     }
     $CloneDir = "$env:LOCALAPPDATA\isitdone-repo"
     if (Test-Path "$CloneDir\.git") {
-        $p = Start-Process git -ArgumentList "-C","$CloneDir","pull","--ff-only" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $LogFile -RedirectStandardError $LogFile
+        $p = Start-Process git -ArgumentList "-C","$CloneDir","pull","--ff-only" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog
     } else {
-        $p = Start-Process git -ArgumentList "clone","https://github.com/Randlophrs/isitdone.git","$CloneDir" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $LogFile -RedirectStandardError $LogFile
+        $p = Start-Process git -ArgumentList "clone","https://github.com/Randlophrs/isitdone.git","$CloneDir" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog
         if ($p.ExitCode -ne 0) {
             Write-Error "git clone failed. Check network / repo access, then retry."
             exit 1
@@ -51,7 +53,7 @@ function Step($name) {
 $venvPy = "$Repo\backend\.venv\Scripts\python.exe"
 if (-not (Test-Path $venvPy)) {
     Step "Creating virtual environment"
-    $p = Start-Process python -ArgumentList "-m","venv","$Repo\backend\.venv" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $LogFile -RedirectStandardError $LogFile
+    $p = Start-Process python -ArgumentList "-m","venv","$Repo\backend\.venv" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog
     if ($p.ExitCode -ne 0) {
         Write-Error "Failed to create virtualenv."
         exit 1
@@ -59,16 +61,16 @@ if (-not (Test-Path $venvPy)) {
 }
 
 Step "Installing backend dependencies"
-$p = Start-Process "$venvPy" -ArgumentList "-m","pip","install","-q","-r","$Repo\backend\requirements.txt" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $LogFile -RedirectStandardError $LogFile
+$p = Start-Process "$venvPy" -ArgumentList "-m","pip","install","-q","-r","$Repo\backend\requirements.txt" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog
 if ($p.ExitCode -ne 0) {
-    Write-Error "pip install of requirements failed; check network/Python (log: $LogFile)."
+    Write-Error "pip install of requirements failed; check network/Python (log: $ErrLog)."
     exit 1
 }
 
 Step "Installing isitdone command"
-$p = Start-Process "$venvPy" -ArgumentList "-m","pip","install","-q","-e","$Repo" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $LogFile -RedirectStandardError $LogFile
+$p = Start-Process "$venvPy" -ArgumentList "-m","pip","install","-q","-e","$Repo" -Wait -NoNewWindow -PassThru -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog
 if ($p.ExitCode -ne 0) {
-    Write-Error "pip install -e . failed (log: $LogFile)."
+    Write-Error "pip install -e . failed (log: $ErrLog)."
     exit 1
 }
 
