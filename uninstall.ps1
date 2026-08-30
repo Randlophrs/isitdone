@@ -1,12 +1,13 @@
 # isitdone uninstaller. Reverses install.ps1:
-#   - removes the `isitdone` shim from %LOCALAPPDATA%\isitdone
-#   - removes that folder (and the venv Scripts dir) from the user PATH
+#   - removes every isitdone/venv entry from the user PATH
 #   - uninstalls the editable `isitdone` package from the venv
 #   - removes the leftover `isitdone.exe` the pip wrapper leaves behind
 #   - removes the venv
+#   - removes the Start Menu shortcut (Windows search entry)
 #   - removes the cloned repo at %LOCALAPPDATA%\isitdone-repo (the heavy folder:
-#     source + node_modules + venv + dist). A user's own source checkout is left
-#     untouched; only its venv is removed.
+#     source + node_modules + venv + dist) and any stale %LOCALAPPDATA%\isitdone
+#     shim dir. A user's own source checkout is left untouched; only its venv
+#     is removed.
 # User data (%APPDATA%\isitdone\data) is kept so history is not lost.
 # No admin rights required.
 param()
@@ -69,6 +70,13 @@ $link = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\isitdone.lnk"
 if (Test-Path $link) {
     Remove-Item $link -Force
     Write-Host "Removed Start Menu shortcut."
+}
+
+# Remove the stale shim dir from older installs (%LOCALAPPDATA%\isitdone). This
+# is NOT the user-data dir (%APPDATA%\isitdone\data), so history is untouched.
+if (Test-Path $DestDir) {
+    Remove-Item $DestDir -Recurse -Force
+    Write-Host "Removed legacy shim dir $DestDir"
 }
 
 Write-Host ""

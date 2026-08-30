@@ -75,7 +75,7 @@ if ($p.ExitCode -ne 0) {
 }
 
 # pip's GUI-script wrapper ships with the Python launcher icon. Replace it with
-# our green-checkmark icon so it reads right in Windows search / Start menu.
+# our purple-checkmark icon so it reads right in Windows search / Start menu.
 # (This .exe is rebuilt by `pip install -e .` above, so it must run after it.)
 $setIcon = "$Repo\scripts\set_exe_icon.py"
 if (Test-Path $setIcon) {
@@ -84,7 +84,7 @@ if (Test-Path $setIcon) {
 
 # Start Menu shortcut. pip's editable install leaves one pointing at pythonw.exe
 # with the Python icon (that's what Windows search shows), so we own it: point at
-# our isitdone.exe and give it the green-checkmark icon.
+# our isitdone.exe and give it the purple-checkmark icon.
 $isitdoneExe = "$Repo\backend\.venv\Scripts\isitdone.exe"
 $isitdoneIco = "$Repo\assets\isitdone.ico"
 $link = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\isitdone.lnk"
@@ -125,13 +125,19 @@ Step "Adding launcher to PATH"
 # `pip install -e .` registers `isitdone` as a GUI-script (.exe, no console
 # window) because [project.gui-scripts] is set in pyproject.toml. Putting the
 # venv's Scripts dir on PATH is all we need - no separate shim, so no flash on
-# launch. The leftover .pyw/.cmd/.vbs shim from older installs is removed.
+# launch. Strip any stale isitdone/venv entries first (from older installs or a
+# partial uninstall) so we never leave a dangling PATH entry, then add ours.
 $oldShim = "$DestDir\isitdone.pyw"
 if (Test-Path $oldShim) { Remove-Item $oldShim -Force }
 $venvScripts = "$Repo\backend\.venv\Scripts"
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if (($userPath -split ";") -notcontains $venvScripts) {
-    [Environment]::SetEnvironmentVariable("Path", "$userPath;$venvScripts", "User")
+$kept = ($userPath -split ";") | Where-Object { $_ -and $_ -notmatch "isitdone|backend\\\.venv" }
+$newPath = ($kept -join ";")
+if ($newPath -notmatch [regex]::Escape($venvScripts)) {
+    $newPath = "$newPath;$venvScripts"
+}
+if ($newPath -ne $userPath) {
+    [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
     Write-Host "   Added venv Scripts to user PATH." -ForegroundColor Green
 } else {
     Write-Host "   Already on PATH." -ForegroundColor Green
@@ -142,11 +148,14 @@ Write-Host ""
 Write-Host "Done. Launching isitdone..." -ForegroundColor Green
 
 # Launch immediately so the user gets the app without reopening a terminal.
-# pythonw + launcher.pyw = no console, detached from this shell.
-$venvPyw = "$Repo\backend\.venv\Scripts\pythonw.exe"
-$launcher = "$Repo\launcher.pyw"
-if (Test-Path $venvPyw) {
+# Prefer the GUI-script exe (on PATH, no console); fall back to pythonw +
+# launcher.pyw if it is missing for any reason.
+if (Test-Path $isitdoneExe) {
+    Start-Process -FilePath $isitdoneExe
+} elseif (Test-Path $venvPyw) {
     Start-Process -FilePath $venvPyw -ArgumentList $launcher
 } else {
     Write-Host "Could not auto-launch (venv missing). In a NEW terminal run:  isitdone" -ForegroundColor Yellow
 }
+$venvPyw = "$Repo\backend\.venv\Scripts\pythonw.exe"
+$launcher = "$Repo\launcher.pyw"
