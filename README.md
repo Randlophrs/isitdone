@@ -36,9 +36,9 @@ Data utama disimpan secara lokal menggunakan SQLite melalui backend Python FastA
 - [Single User dan Concurrency](#single-user-dan-concurrency)
 - [Struktur Project](#struktur-project)
 - [Persyaratan Sistem](#persyaratan-sistem)
+- [Install & Menjalankan `isitdone`](#install--menjalankan-isitdone)
 - [Cara Menjalankan](#cara-menjalankan)
 - [Production Lokal](#production-lokal)
-- [Install & Menjalankan `isitdone`](#install--menjalankan-isitdone)
 - [Backup dan Restore](#backup-dan-restore)
 - [Konfigurasi](#konfigurasi)
 - [CORS](#cors)
@@ -1258,6 +1258,62 @@ Pada mode portable atau packaged:
 
 ---
 
+## Install & Menjalankan `isitdone`
+
+`isitdone` butuh **Python 3.11+** (Node.js hanya untuk build frontend saat development). Setelah install, cukup ketik `isitdone` di terminal — server lokal jalan di background, ikon **system tray** muncul, dan browser otomatis kebuka. Tidak ada jendela terminal yang menggantung.
+
+### Install tanpa clone (Windows)
+
+Buka PowerShell dan jalankan satu baris — script akan meng-clone repo ke
+`%LOCALAPPDATA%\isitdone-repo`, menyiapkan venv, lalu mendaftarkan command `isitdone`:
+
+```powershell
+irm https://raw.githubusercontent.com/Randlophrs/isitdone/main/install.ps1 | iex
+```
+
+Butuh **Git** dan **Python 3.11+** terpasang.
+
+### Clone & install
+
+```bash
+git clone https://github.com/Randlophrs/isitdone.git
+cd isitdone
+
+# cara cepat (Windows): siapkan venv, install dependensi, daftarkan command `isitdone`
+powershell -ExecutionPolicy Bypass -File install.ps1
+```
+
+Atau manual:
+
+```bash
+python -m venv backend/.venv
+backend/.venv/Scripts/activate
+pip install -r backend/requirements.txt
+pip install -e .
+```
+
+### Jalankan
+
+Buka terminal baru, lalu:
+
+```bash
+isitdone
+```
+
+- Server berjalan di `http://127.0.0.1:8000`.
+- Ikon tray (centang hijau) muncul di taskbar.
+- Browser terbuka otomatis ke dashboard.
+- **Quit** lewat menu tray → Quit (menghentikan server).
+
+### Catatan
+
+- `install.ps1` menaruh shim `isitdone.cmd` di `%LOCALAPPDATA%\isitdone` dan menambahkannya ke user PATH, sehingga command `isitdone` bisa dipanggil dari terminal mana pun. Buka terminal baru setelah install agar PATH terbaca.
+- `launcher.pyw` adalah entry point `isitdone`: menjalankan backend lewat venv, membuka browser, dan menampilkan tray. Disimpan sebagai `.pyw` agar Windows tidak menampilkan console window.
+- Data tetap di SQLite di data directory user (`%APPDATA%\isitdone\data\`).
+- Untuk development (frontend hot-reload), gunakan `npm run dev` seperti di atas — `isitdone` ditujukan untuk penggunaan lokal production.
+
+---
+
 ## Cara Menjalankan
 
 ### Clone repository
@@ -1460,63 +1516,6 @@ Saat production server dijalankan:
 
 Jika data directory gagal dibuat, backend harus menghentikan startup dengan pesan error yang jelas.
 
----
-
-## Install & Menjalankan `isitdone`
-
-`isitdone` butuh **Python 3.11+** (Node.js hanya untuk build frontend saat development). Setelah install, cukup ketik `isitdone` di terminal — server lokal jalan di background, ikon **system tray** muncul, dan browser otomatis kebuka. Tidak ada jendela terminal yang menggantung.
-
-### Install tanpa clone (Windows)
-
-Buka PowerShell dan jalankan satu baris — script akan meng-clone repo ke
-`%LOCALAPPDATA%\isitdone-repo`, menyiapkan venv, lalu mendaftarkan command `isitdone`:
-
-```powershell
-irm https://raw.githubusercontent.com/username/isitdone/main/install.ps1 | iex
-```
-
-Butuh **Git** dan **Python 3.11+** terpasang.
-
-### Clone & install
-
-```bash
-git clone https://github.com/Randlophrs/isitdone.git
-cd isitdone
-
-# cara cepat (Windows): siapkan venv, install dependensi, daftarkan command `isitdone`
-powershell -ExecutionPolicy Bypass -File install.ps1
-```
-
-Atau manual:
-
-```bash
-python -m venv backend/.venv
-backend/.venv/Scripts/activate
-pip install -r backend/requirements.txt
-pip install -e .
-```
-
-### Jalankan
-
-Buka terminal baru, lalu:
-
-```bash
-isitdone
-```
-
-- Server berjalan di `http://127.0.0.1:8000`.
-- Ikon tray (centang hijau) muncul di taskbar.
-- Browser terbuka otomatis ke dashboard.
-- **Quit** lewat menu tray → Quit (menghentikan server).
-
-### Catatan
-
-- `install.ps1` menaruh shim `isitdone.cmd` di `%LOCALAPPDATA%\isitdone` dan menambahkannya ke user PATH, sehingga command `isitdone` bisa dipanggil dari terminal mana pun. Buka terminal baru setelah install agar PATH terbaca.
-- `launcher.pyw` adalah entry point `isitdone`: menjalankan backend lewat venv, membuka browser, dan menampilkan tray. Disimpan sebagai `.pyw` agar Windows tidak menampilkan console window.
-- Data tetap di SQLite di data directory user (`%APPDATA%\isitdone\data\`).
-- Untuk development (frontend hot-reload), gunakan `npm run dev` seperti di atas — `isitdone` ditujukan untuk penggunaan lokal production.
-
----
 
 ## Backup dan Restore
 
