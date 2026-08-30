@@ -1,7 +1,8 @@
 # isitdone uninstaller. Reverses install.ps1:
 #   - removes the `isitdone` shim from %LOCALAPPDATA%\isitdone
-#   - removes that folder from the user PATH
+#   - removes that folder (and the venv Scripts dir) from the user PATH
 #   - uninstalls the editable `isitdone` package from the venv
+#   - removes the leftover `isitdone.exe` the pip wrapper leaves behind
 #   - removes the venv
 #   - removes the cloned repo at %LOCALAPPDATA%\isitdone-repo (the heavy folder:
 #     source + node_modules + venv + dist). A user's own source checkout is left
@@ -15,20 +16,17 @@ $Repo = $PSScriptRoot
 $DestDir = "$env:LOCALAPPDATA\isitdone"
 $CloneDir = "$env:LOCALAPPDATA\isitdone-repo"
 
-# 1. Remove PATH entry (fixed paths - work even when run via irm | iex,
-#    where $PSScriptRoot is empty because the script has no file backing).
-# The PATH entry is the venv Scripts dir (where `isitdone` GUI-script lives),
-# not a shim folder.
-$venvScripts = if ($Repo -and (Test-Path "$Repo\backend\.venv\Scripts")) {
-    "$Repo\backend\.venv\Scripts"
-} else {
-    "$CloneDir\backend\.venv\Scripts"
-}
+# 1. Strip every user-PATH entry that points into an isitdone install. pip's
+#    `uninstall` does NOT delete the GUI-script .exe, so a stale entry pointing
+#    at a now-removed venv makes `isitdone` error with "Unable to find an
+#    appended archive" instead of a clean "not recognized". Match broadly
+#    (isitdone / backend\.venv) since the venv may already be gone.
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if (($userPath -split ";") -contains $venvScripts) {
-    $newPath = ($userPath -split ";") | Where-Object { $_ -and $_ -ne $venvScripts }
-    [Environment]::SetEnvironmentVariable("Path", ($newPath -join ";"), "User")
-    Write-Host "Removed $venvScripts from user PATH."
+$kept = ($userPath -split ";") | Where-Object { $_ -and $_ -notmatch "isitdone|backend\\\.venv" }
+$newPath = $kept -join ";"
+if ($newPath -ne $userPath) {
+    [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+    Write-Host "Removed isitdone entries from user PATH."
 }
 
 # 2. Remove the cloned repo (heavy folder) plus its venv. This is the path taken
@@ -51,6 +49,18 @@ if (Test-Path $CloneDir) {
         Write-Host "Removed venv (kept your source at $Repo)."
     } else {
         Write-Host "No cloned repo or venv found."
+    }
+}
+
+# 3. Delete the GUI-script .exe pip leaves behind. `pip uninstall` unregisters
+#    the package but keeps the wrapper exe; without this, a stale exe on PATH
+#    (pointing at a removed venv) errors with "Unable to find an appended
+#    archive" instead of a clean "command not found".
+foreach ($scripts in @("$Repo\backend\.venv\Scripts", "$CloneDir\backend\.venv\Scripts")) {
+    $exe = "$scripts\isitdone.exe"
+    if (Test-Path $exe) {
+        Remove-Item $exe -Force
+        Write-Host "Removed leftover $exe"
     }
 }
 
