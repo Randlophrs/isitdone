@@ -25,6 +25,30 @@ URL = f"http://{HOST}:{PORT}"
 CREATE_NO_WINDOW = 0x08000000
 
 
+def free_port(host: str, port: str) -> None:
+    # Kill whatever already holds our port so the new server starts clean and
+    # (re)mounts the frontend. Otherwise a stale server from a previous run -
+    # one started before `dist/` existed - keeps port 8000 and answers "/" 404.
+    try:
+        out = subprocess.run(
+            ["netstat", "-ano", "-p", "TCP"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        ).stdout
+        for line in out.splitlines():
+            parts = line.split()
+            if len(parts) >= 5 and f":{port}" in parts[1] and "LISTENING" in parts:
+                pid = parts[-1]
+                subprocess.run(
+                    ["taskkill", "/PID", pid, "/T", "/F"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+    except Exception:
+        pass
+
+
 def start_server() -> subprocess.Popen:
     if not VENV_PY.exists():
         raise SystemExit(
@@ -84,6 +108,7 @@ def make_icon():
 def main() -> None:
     import pystray
 
+    free_port(HOST, PORT)
     server = start_server()
 
     def open_app(_=None):
