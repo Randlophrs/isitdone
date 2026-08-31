@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Plus, CheckCheck } from "lucide-react";
 import { useDashboard } from "@/features/routines/queries";
 import { useCompleteRoutine, useUncompleteRoutine, useDeleteRoutine, useSkipRoutine, useUnskipRoutine } from "@/features/routines/queries";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +8,7 @@ import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
 import { ProgressSummary } from "@/components/dashboard/ProgressSummary";
 import { CategoryGroup } from "@/components/dashboard/CategoryGroup";
 import { QuickAdd } from "@/components/routines/QuickAdd";
+import { Modal } from "@/components/layout/Modal";
 import type { DashboardRoutine } from "@/types";
 import { cx } from "@/lib/utils";
 
@@ -39,6 +40,7 @@ export function DashboardPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<DashboardRoutine | null>(null);
+  const [confirmAll, setConfirmAll] = useState(false);
 
   const toggle = (routine: DashboardRoutine) => {
     if (routine.isCompleted) {
@@ -84,6 +86,17 @@ export function DashboardPage() {
 
   const handleEdit = (routine: DashboardRoutine) => setEditing(routine);
 
+  const pendingAll = useMemo(
+    () => data?.groups.flatMap((g) => g.routines).filter((r) => !r.isCompleted && !r.isSkipped) ?? [],
+    [data],
+  );
+
+  const completeAll = () => {
+    setConfirmAll(false);
+    pendingAll.forEach((r) => complete.mutate(r.id));
+    show(`${pendingAll.length} routines done`);
+  };
+
   const groups = useMemo(() => {
     if (!data) return [];
     return data.groups
@@ -121,6 +134,15 @@ export function DashboardPage() {
         </div>
         <div className="flex items-center gap-2">
           <ConnectionStatus />
+          {pendingAll.length > 0 && (
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setConfirmAll(true)}
+            >
+              <CheckCheck size={18} /> Complete all
+            </button>
+          )}
           <button
             type="button"
             className="btn-accent"
@@ -198,6 +220,68 @@ export function DashboardPage() {
 
       <QuickAdd open={adding} onClose={() => setAdding(false)} />
       <QuickAdd open={editing !== null} routine={editing} onClose={() => setEditing(null)} />
+
+      <CompleteAllDialog
+        open={confirmAll}
+        count={pendingAll.length}
+        onClose={() => setConfirmAll(false)}
+        onConfirm={completeAll}
+      />
     </div>
+  );
+}
+
+function CompleteAllDialog({
+  open,
+  count,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean;
+  count: number;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const [remaining, setRemaining] = useState(3);
+
+  useEffect(() => {
+    if (!open) return;
+    setRemaining(3);
+    const start = performance.now();
+    let raf = 0;
+    const tick = () => {
+      const left = 3 - (performance.now() - start) / 1000;
+      setRemaining(left > 0 ? left : 0);
+      if (left > 0) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [open]);
+
+  if (!open) return null;
+  const ready = remaining <= 0;
+
+  return (
+    <Modal open={open} onClose={onClose} label="Complete all routines">
+      <div className="card w-full max-w-sm space-y-3 p-4">
+        <h2 className="text-sm font-semibold">Complete {count} routines?</h2>
+        <p className="text-sm text-muted">
+          This marks every pending routine as done. You can undo each one after.
+        </p>
+        <div className="flex gap-2 pt-1">
+          <button type="button" className="btn-ghost flex-1" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn-accent flex-1"
+            disabled={!ready}
+            onClick={onConfirm}
+          >
+            {ready ? "Complete all" : `Wait ${remaining.toFixed(1)}s`}
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
