@@ -75,3 +75,9 @@ async def restore_sqlite(
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
     return {"status": "restored"}
+
+
+@router.post("/wipe", status_code=204)
+def wipe_all(session: SessionDep) -> None:
+    backup_service._clear_all(session)
+    return None

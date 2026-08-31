@@ -1,12 +1,14 @@
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useExportBackup,
   useImportBackup,
   useRestoreSqlite,
+  useWipeAll,
 } from "@/features/backup/queries";
 import { useRoutines } from "@/features/routines/queries";
 import { useTheme } from "@/hooks/use-theme";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
+import { Modal } from "@/components/layout/Modal";
 import { cx } from "@/lib/utils";
 import {
   getReminderTimes,
@@ -14,7 +16,7 @@ import {
   setReminderTime,
   setRemindersEnabled,
 } from "@/lib/reminders";
-import { Bell } from "lucide-react";
+import { Bell, Trash2 } from "lucide-react";
 
 export function SettingsPage() {
   const { theme, toggle } = useTheme();
@@ -43,10 +45,12 @@ export function SettingsPage() {
   const exportMut = useExportBackup();
   const importMut = useImportBackup();
   const restoreMut = useRestoreSqlite();
+  const wipeMut = useWipeAll();
   const fileRef = useRef<HTMLInputElement>(null);
   const sqliteRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<"merge" | "replace">("merge");
   const [msg, setMsg] = useState<string | null>(null);
+  const [wipeOpen, setWipeOpen] = useState(false);
 
   function onImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -70,6 +74,16 @@ export function SettingsPage() {
       onError: (err) => setMsg(`Restore failed: ${String(err)}`),
     });
     e.target.value = "";
+  }
+
+  function onWipeConfirm() {
+    wipeMut.mutate(undefined, {
+      onSuccess: () => {
+        setMsg("All data wiped.");
+        setWipeOpen(false);
+      },
+      onError: (err) => setMsg(`Wipe failed: ${String(err)}`),
+    });
   }
 
   return (
@@ -216,12 +230,112 @@ export function SettingsPage() {
             Restore database
           </button>
         </div>
+
+        <div className="border-t border-red-500/30 p-4">
+          <p className="flex items-center gap-1.5 font-medium text-red-600">
+            <Trash2 size={14} /> Reset all data
+          </p>
+          <p className="mb-2 text-xs text-muted">
+            Permanently deletes every routine, category, and completion. This
+            can’t be undone.
+          </p>
+          <button
+            type="button"
+            className="btn-accent mt-1 bg-red-500 hover:bg-red-600"
+            onClick={() => setWipeOpen(true)}
+          >
+            Delete everything
+          </button>
+        </div>
       </section>
+
+      <WipeDialog
+        open={wipeOpen}
+        pending={wipeMut.isPending}
+        onClose={() => setWipeOpen(false)}
+        onConfirm={onWipeConfirm}
+      />
 
       <p className="px-1 text-xs text-muted">
         Timezone and week start are set by the local server. Data stays on this
         device.
       </p>
     </div>
+  );
+}
+
+function WipeDialog({
+  open,
+  pending,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean;
+  pending: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const [remaining, setRemaining] = useState(3);
+  const [typed, setTyped] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setRemaining(3);
+    setTyped("");
+    const start = performance.now();
+    let raf = 0;
+    const tick = () => {
+      const left = 3 - (performance.now() - start) / 1000;
+      setRemaining(left > 0 ? left : 0);
+      if (left > 0) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [open]);
+
+  if (!open) return null;
+  const armed = remaining <= 0 && typed === "RESET";
+
+  return (
+    <Modal open={open} onClose={onClose} label="Reset all data">
+      <div className="card w-full max-w-sm space-y-3 p-4">
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-red-600">
+          <Trash2 size={15} /> Delete all data?
+        </h2>
+        <p className="text-sm text-muted">
+          Every routine, category, and completion is gone for good. Export a
+          backup first if you might want it back.
+        </p>
+        <label className="block text-xs text-muted">
+          {remaining > 0 ? (
+            <>Wait <span className="font-mono text-foreground">{remaining.toFixed(1)}s</span> before this unlocks.</>
+          ) : (
+            <>Type <span className="font-mono font-medium text-foreground">RESET</span> to confirm</>
+          )}
+          <input
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            placeholder="RESET"
+            disabled={remaining > 0}
+            autoFocus={remaining <= 0}
+            className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-red-500 disabled:opacity-50"
+            aria-label="Type RESET to confirm wipe"
+          />
+        </label>
+        <div className="flex gap-2 pt-1">
+          <button type="button" className="btn-ghost flex-1" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn-accent flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-40"
+            disabled={!armed || pending}
+            onClick={onConfirm}
+          >
+            {pending ? "Deleting…" : "Delete everything"}
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }

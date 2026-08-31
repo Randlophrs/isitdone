@@ -50,3 +50,11 @@ export function useRestoreSqlite() {
     onSuccess: () => qc.invalidateQueries(),
   });
 }
+
+export function useWipeAll() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.wipeAll(),
+    onSuccess: () => qc.invalidateQueries(),
+  });
+}

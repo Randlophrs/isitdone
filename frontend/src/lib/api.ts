@@ -102,4 +102,5 @@ export const api = {
 
   // backup
   exportBackup: () => request<unknown>("/backup/export"),
+  wipeAll: () => request<void>("/backup/wipe", { method: "POST" }),
 };
