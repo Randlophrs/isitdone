@@ -112,11 +112,45 @@ def make_icon():
     return img
 
 
+def _already_running() -> bool:
+    # Single-instance guard: a stale lock means a prior run crashed without
+    # cleaning up. Walk its pid via OpenProcess - os.kill(pid, 0) is not
+    # supported on Windows Python 3.13 and raises SystemError.
+    lock = ROOT / ".isitdone.lock"
+    if not lock.exists():
+        return False
+    try:
+        pid = int(lock.read_text().strip())
+    except (ValueError, OSError):
+        lock.unlink(missing_ok=True)
+        return False
+    import ctypes
+
+    PROCESS_QUERY_LIMITED = 0x1000
+    handle = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_LIMITED, False, pid)
+    if handle:
+        ctypes.windll.kernel32.CloseHandle(handle)
+        return True
+    lock.unlink(missing_ok=True)
+    return False
+
+
+def _write_lock() -> None:
+    (ROOT / ".isitdone.lock").write_text(str(os.getpid()))
+
+
 def main() -> None:
     import pystray
 
+    if _already_running():
+        # Another instance owns the port/tray. Just focus its window.
+        if os.name == "nt":
+            os.startfile(URL)
+        return
+
     free_port(HOST, PORT)
     server = start_server()
+    _write_lock()
 
     def open_app(_=None):
         # os.startfile is the native, console-free way to open a URL on Windows.
@@ -130,6 +164,10 @@ def main() -> None:
     def quit_app(icon):
         icon.stop()
         stop_server(server)
+        try:
+            (ROOT / ".isitdone.lock").unlink()
+        except OSError:
+            pass
 
     threading.Thread(
         target=lambda: (wait_for_health() and open_app()), daemon=True
