@@ -72,6 +72,16 @@ export function RoutineRow({ routine, onToggle, onDelete, onEdit, onSkip, onUnsk
           >
             {routine.name}
           </span>
+          {routine.description && (
+            <span
+              className={cx(
+                "mt-0.5 block truncate text-xs text-muted",
+                done && "line-through",
+              )}
+            >
+              {routine.description}
+            </span>
+          )}
           <span className="mt-0.5 flex items-center gap-2 text-xs text-muted">
             <span
               className="inline-block h-2 w-2 flex-none rounded-full"

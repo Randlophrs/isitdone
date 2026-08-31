@@ -37,6 +37,7 @@ export function QuickAdd({ open, onClose, routine = null }: Props) {
   const [weekday, setWeekday] = useState<number>(0);
   const [monthweek, setMonthweek] = useState<number>(1);
   const [categoryId, setCategoryId] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
   const [resetTime, setResetTime] = useState<string>("00:00");
   const [nowPreview, setNowPreview] = useState<string>("");
 
@@ -60,6 +61,7 @@ export function QuickAdd({ open, onClose, routine = null }: Props) {
     setWeekday(routine.weekday ?? 0);
     setMonthweek(routine.monthweek ?? 1);
     setCategoryId(routine.categoryId ?? "");
+    setDescription(routine.description ?? "");
     setResetTime(routine.resetTime ?? "00:00");
   }, [open, routine]);
 
@@ -69,6 +71,7 @@ export function QuickAdd({ open, onClose, routine = null }: Props) {
     setWeekday(0);
     setMonthweek(1);
     setCategoryId("");
+    setDescription("");
     setResetTime("00:00");
     onClose();
   }
@@ -85,6 +88,7 @@ export function QuickAdd({ open, onClose, routine = null }: Props) {
       monthweek: frequency === "monthly" ? monthweek : null,
     };
     if (categoryId) payload.categoryId = categoryId;
+    if (description.trim()) payload.description = description.trim();
     if (editing && routine) {
       update.mutate({ id: routine.id, data: payload }, { onSuccess: () => reset() });
     } else {
@@ -122,6 +126,14 @@ export function QuickAdd({ open, onClose, routine = null }: Props) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Routine name"
+          className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
+        />
+
+        {/* Description */}
+        <input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Add a note (optional)"
           className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
         />
 
