@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, CheckCheck } from "lucide-react";
+import { Plus, CheckCheck, Search } from "lucide-react";
 import { useDashboard } from "@/features/routines/queries";
 import { useCompleteRoutine, useUncompleteRoutine, useDeleteRoutine, useSkipRoutine, useUnskipRoutine, useReorderRoutines } from "@/features/routines/queries";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +39,7 @@ export function DashboardPage() {
   const reorder = useReorderRoutines();
   const { toasts, show, dismiss } = useToast();
   const [filter, setFilter] = useState<Filter>("all");
+  const [query, setQuery] = useState("");
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<DashboardRoutine | null>(null);
   const [confirmAll, setConfirmAll] = useState(false);
@@ -104,19 +105,20 @@ export function DashboardPage() {
 
   const groups = useMemo(() => {
     if (!data) return [];
+    const q = query.trim().toLowerCase();
     return data.groups
       .map((g) => ({
         ...g,
-        routines: g.routines.filter((r) =>
-          filter === "all"
-            ? true
-            : filter === "pending"
-              ? !r.isCompleted
-              : r.isCompleted,
-        ),
+        routines: g.routines.filter((r) => {
+          if (filter === "pending" && r.isCompleted) return false;
+          if (filter === "completed" && !r.isCompleted) return false;
+          if (q && !`${r.name} ${r.description ?? ""}`.toLowerCase().includes(q))
+            return false;
+          return true;
+        }),
       }))
       .filter((g) => g.routines.length > 0);
-  }, [data, filter]);
+  }, [data, filter, query]);
 
   if (isError) {
     return (
@@ -162,6 +164,20 @@ export function DashboardPage() {
         <div className="card p-6 text-center text-sm text-muted">Loading…</div>
       ) : (
         <>
+          <div className="relative">
+            <Search
+              size={15}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+            />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search routines"
+              className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm outline-none focus:border-accent"
+              aria-label="Search routines"
+            />
+          </div>
+
           <ProgressSummary
             completed={data.progress.completed}
             total={data.progress.total}
