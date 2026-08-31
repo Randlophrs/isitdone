@@ -185,7 +185,7 @@ export function DashboardPage() {
           {data.progress.completed === data.progress.total &&
             data.progress.total > 0 && (
               <div className="card p-6 text-center">
-                <p className="text-lg font-medium">All done 🎉</p>
+                <p className="text-lg font-medium">All done</p>
                 <p className="mt-1 text-sm text-muted">
                   Enjoy the rest of your day.
                 </p>

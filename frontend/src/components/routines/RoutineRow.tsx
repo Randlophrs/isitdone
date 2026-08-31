@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Check, X, Pencil, SkipForward } from "lucide-react";
 import type { DashboardRoutine } from "@/types";
 import { cx, formatTime, frequencyLabel, compactSchedule } from "@/lib/utils";
-import { getCategoryIcon } from "@/lib/category-style";
 
 interface Props {
   routine: DashboardRoutine;
@@ -17,7 +16,6 @@ export function RoutineRow({ routine, onToggle, onDelete, onEdit, onSkip, onUnsk
   const done = routine.isCompleted;
   const skipped = routine.isSkipped;
   const schedule = compactSchedule(routine.frequency, routine.weekday, routine.monthweek);
-  const CatIcon = getCategoryIcon(routine.icon);
   const [confirming, setConfirming] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -80,13 +78,6 @@ export function RoutineRow({ routine, onToggle, onDelete, onEdit, onSkip, onUnsk
               style={{ background: routine.color ?? "rgb(var(--muted))" }}
               aria-hidden
             />
-            <span
-              className="flex flex-none items-center gap-1"
-              style={{ color: routine.color ?? undefined }}
-            >
-              <CatIcon size={12} />
-              {routine.categoryName}
-            </span>
             {frequencyLabel(routine.frequency)}
             {schedule && (
               <>

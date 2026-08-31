@@ -43,7 +43,10 @@ function Shell() {
         <div className="md:flex md:min-h-screen">
           <aside className="flex md:flex-col border-b md:border-b-0 md:border-r border-border bg-surface md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0">
             <div className="flex items-center justify-between px-4 py-4 md:block">
-              <span className="font-semibold text-lg">isitdone</span>
+              <span className="mb-1 flex flex-col items-center gap-1.5 font-semibold text-2xl">
+                <img src="/isitdone.ico" alt="" className="h-12 w-12" />
+                isitdone
+              </span>
               <button
                 className="btn-ghost md:hidden"
                 onClick={toggle}
@@ -84,7 +87,7 @@ function Shell() {
             </button>
           </aside>
 
-          <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-4">
+          <main className="flex-1 mx-auto w-full max-w-3xl px-4 pt-12 pb-4">
             <Routes>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/history" element={<HistoryPage />} />
