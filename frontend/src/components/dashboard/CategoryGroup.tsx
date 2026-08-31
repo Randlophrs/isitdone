@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { DashboardRoutine } from "@/types";
 import { RoutineRow } from "@/components/routines/RoutineRow";
 import { getCategoryIcon } from "@/lib/category-style";
@@ -10,12 +11,28 @@ interface Props {
   onEdit: (routine: DashboardRoutine) => void;
   onSkip: (routine: DashboardRoutine) => void;
   onUnskip: (routine: DashboardRoutine) => void;
+  onReorder: (orderedIds: string[]) => void;
 }
 
-export function CategoryGroup({ category, routines, onToggle, onDelete, onEdit, onSkip, onUnskip }: Props) {
+export function CategoryGroup({ category, routines, onToggle, onDelete, onEdit, onSkip, onUnskip, onReorder }: Props) {
   const remaining = routines.filter((r) => !r.isCompleted && !r.isSkipped).length;
   const first = routines[0];
   const CatIcon = getCategoryIcon(first?.icon);
+  const [dragId, setDragId] = useState<string | null>(null);
+
+  function handleDrop(targetId: string) {
+    if (!dragId || dragId === targetId) {
+      setDragId(null);
+      return;
+    }
+    const ids = routines.map((r) => r.id);
+    const from = ids.indexOf(dragId);
+    const to = ids.indexOf(targetId);
+    ids.splice(to, 0, ids.splice(from, 1)[0]);
+    onReorder(ids);
+    setDragId(null);
+  }
+
   return (
     <section>
       <div className="mb-2 flex items-center justify-between px-1">
@@ -40,6 +57,10 @@ export function CategoryGroup({ category, routines, onToggle, onDelete, onEdit, 
           <RoutineRow
             key={r.id}
             routine={r}
+            dragging={dragId === r.id}
+            onDragStart={() => setDragId(r.id)}
+            onDragEnd={() => setDragId(null)}
+            onDrop={() => handleDrop(r.id)}
             onToggle={onToggle}
             onDelete={onDelete}
             onEdit={onEdit}

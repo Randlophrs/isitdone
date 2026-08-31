@@ -49,6 +49,7 @@ def current_dashboard(session: Session) -> dict:
             "color": cat.color if cat else None,
             "icon": cat.icon if cat else None,
             "isPinned": routine.is_pinned,
+            "sortOrder": routine.sort_order,
             "timezone": routine.timezone,
             "weekday": routine.weekday,
             "monthweek": routine.monthweek,
@@ -86,7 +87,7 @@ def current_dashboard(session: Session) -> dict:
 def _sort_group(routines: list[dict]) -> list[dict]:
     return sorted(
         routines,
-        key=lambda r: (not r["isPinned"], r["isCompleted"], r["name"].lower()),
+        key=lambda r: (not r["isPinned"], -(r.get("sortOrder") or 0), r["isCompleted"], r["name"].lower()),
     )
 
 

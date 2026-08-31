@@ -59,3 +59,10 @@ def archive_routine(session: SessionDep, routine_id: str):
 def restore_routine(session: SessionDep, routine_id: str):
     routine = _get_or_404(session, routine_id)
     return routine_service.restore_routine(session, routine)
+
+
+@router.post("/reorder", status_code=204)
+def reorder_routines(session: SessionDep, body: dict):
+    ids: list[str] = body.get("ids", [])
+    routine_service.reorder_routines(session, ids)
+    return None

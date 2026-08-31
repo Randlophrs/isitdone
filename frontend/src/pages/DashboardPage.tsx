@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, CheckCheck } from "lucide-react";
 import { useDashboard } from "@/features/routines/queries";
-import { useCompleteRoutine, useUncompleteRoutine, useDeleteRoutine, useSkipRoutine, useUnskipRoutine } from "@/features/routines/queries";
+import { useCompleteRoutine, useUncompleteRoutine, useDeleteRoutine, useSkipRoutine, useUnskipRoutine, useReorderRoutines } from "@/features/routines/queries";
 import { useToast } from "@/hooks/use-toast";
 import { ToastHost } from "@/components/layout/Toast";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
@@ -36,6 +36,7 @@ export function DashboardPage() {
   const deleteRoutine = useDeleteRoutine();
   const skip = useSkipRoutine();
   const unskip = useUnskipRoutine();
+  const reorder = useReorderRoutines();
   const { toasts, show, dismiss } = useToast();
   const [filter, setFilter] = useState<Filter>("all");
   const [adding, setAdding] = useState(false);
@@ -85,6 +86,10 @@ export function DashboardPage() {
   };
 
   const handleEdit = (routine: DashboardRoutine) => setEditing(routine);
+
+  const handleReorder = (orderedIds: string[]) => {
+    reorder.mutate(orderedIds);
+  };
 
   const pendingAll = useMemo(
     () => data?.groups.flatMap((g) => g.routines).filter((r) => !r.isCompleted && !r.isSkipped) ?? [],
@@ -200,6 +205,7 @@ export function DashboardPage() {
                 onEdit={handleEdit}
                 onSkip={handleSkip}
                 onUnskip={handleUnskip}
+                onReorder={handleReorder}
               />
             ))}
           </div>

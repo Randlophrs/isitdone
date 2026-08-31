@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, X, Pencil, SkipForward } from "lucide-react";
+import { Check, X, Pencil, SkipForward, GripVertical } from "lucide-react";
 import type { DashboardRoutine } from "@/types";
 import { cx, formatTime, frequencyLabel, compactSchedule } from "@/lib/utils";
 
 interface Props {
   routine: DashboardRoutine;
+  dragging?: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+  onDrop?: () => void;
   onToggle: (routine: DashboardRoutine) => void;
   onDelete: (routine: DashboardRoutine) => void;
   onEdit: (routine: DashboardRoutine) => void;
@@ -12,7 +16,7 @@ interface Props {
   onUnskip: (routine: DashboardRoutine) => void;
 }
 
-export function RoutineRow({ routine, onToggle, onDelete, onEdit, onSkip, onUnskip }: Props) {
+export function RoutineRow({ routine, dragging, onDragStart, onDragEnd, onDrop, onToggle, onDelete, onEdit, onSkip, onUnskip }: Props) {
   const done = routine.isCompleted;
   const skipped = routine.isSkipped;
   const schedule = compactSchedule(routine.frequency, routine.weekday, routine.monthweek);
@@ -38,7 +42,15 @@ export function RoutineRow({ routine, onToggle, onDelete, onEdit, onSkip, onUnsk
   }, [confirming]);
 
   return (
-    <div ref={rootRef} className="group relative h-full">
+    <div
+      ref={rootRef}
+      className="group relative h-full"
+      draggable
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={onDrop}
+    >
       <button
         type="button"
         onClick={() => onToggle(routine)}
@@ -48,11 +60,19 @@ export function RoutineRow({ routine, onToggle, onDelete, onEdit, onSkip, onUnsk
           "hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
           done && "opacity-60",
           skipped && "border-dashed border-muted/50 bg-muted/5",
+          dragging && "opacity-40 ring-2 ring-accent",
         )}
       >
         <span
+          className="flex flex-none cursor-grab items-center self-stretch text-muted active:cursor-grabbing"
+          aria-hidden
+          title="Drag to reorder"
+        >
+          <GripVertical size={16} className="opacity-0 transition-opacity group-hover:opacity-100" />
+        </span>
+        <span
           className={cx(
-            "flex h-6 w-6 flex-none items-center justify-center rounded-full border-2 transition-colors",
+            "flex h-6 w-6 flex-none self-center items-center justify-center rounded-full border-2 transition-colors",
             done
               ? "border-accent bg-accent text-white"
               : "border-muted/50 text-transparent group-hover:border-accent/60",
@@ -72,17 +92,15 @@ export function RoutineRow({ routine, onToggle, onDelete, onEdit, onSkip, onUnsk
           >
             {routine.name}
           </span>
-          {routine.description && (
-            <span
-              className={cx(
-                "mt-0.5 block truncate text-xs text-muted",
-                done && "line-through",
-              )}
-            >
-              {routine.description}
-            </span>
-          )}
-          <span className="mt-0.5 flex items-center gap-2 text-xs text-muted">
+          <span
+            className={cx(
+              "mt-0.5 block min-h-[1rem] truncate text-xs text-muted",
+              done && "line-through",
+            )}
+          >
+            {routine.description}
+          </span>
+          <span className="mt-0.5 flex flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap text-xs text-muted">
             <span
               className="inline-block h-2 w-2 flex-none rounded-full"
               style={{ background: routine.color ?? "rgb(var(--muted))" }}
@@ -92,7 +110,7 @@ export function RoutineRow({ routine, onToggle, onDelete, onEdit, onSkip, onUnsk
             {schedule && (
               <>
                 <span aria-hidden>·</span>
-                {schedule}
+                <span className="truncate">{schedule}</span>
               </>
             )}
             <span aria-hidden>·</span>

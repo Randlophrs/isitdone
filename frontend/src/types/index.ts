@@ -43,6 +43,7 @@ export interface DashboardRoutine {
   color: string | null;
   icon: string | null;
   isPinned: boolean;
+  sortOrder: number;
   timezone: string | null;
   weekday: number | null;
   monthweek: number | null;

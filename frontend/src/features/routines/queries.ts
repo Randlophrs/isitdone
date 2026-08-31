@@ -130,6 +130,17 @@ export function useArchiveRoutine() {
   });
 }
 
+export function useReorderRoutines() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) => api.reorderRoutines(ids),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["routines"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
 export function useDeleteRoutine() {
   const qc = useQueryClient();
   return useMutation({

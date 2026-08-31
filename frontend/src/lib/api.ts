@@ -50,6 +50,11 @@ export const api = {
     request<Routine>(`/routines/${id}/archive`, { method: "POST" }),
   restoreRoutine: (id: string) =>
     request<Routine>(`/routines/${id}/restore`, { method: "POST" }),
+  reorderRoutines: (ids: string[]) =>
+    request<void>("/routines/reorder", {
+      method: "POST",
+      body: JSON.stringify({ ids }),
+    }),
 
   // completions
   complete: (id: string) =>

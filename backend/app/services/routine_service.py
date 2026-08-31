@@ -78,3 +78,14 @@ def restore_routine(session: Session, routine: Routine) -> Routine:
     session.commit()
     session.refresh(routine)
     return routine
+
+
+def reorder_routines(session: Session, ids: list[str]) -> None:
+    routines = {r.id: r for r in session.exec(select(Routine)).all()}
+    for order, routine_id in enumerate(ids):
+        routine = routines.get(routine_id)
+        if routine:
+            routine.sort_order = order
+            routine.updated_at = _utcnow()
+            session.add(routine)
+    session.commit()

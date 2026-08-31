@@ -57,7 +57,7 @@ export function compactSchedule(
     weekday <= 6
   ) {
     const ord = ["1st", "2nd", "3rd", "4th", "5th"][monthweek - 1] ?? `${monthweek}th`;
-    return `${ord} week · ${WEEKDAYS[weekday]}`;
+    return `${ord} · ${WEEKDAYS[weekday].slice(0, 3)}`;
   }
   return "";
 }
