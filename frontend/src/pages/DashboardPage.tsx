@@ -3,7 +3,6 @@ import { Plus, CheckCheck, Search } from "lucide-react";
 import { useDashboard } from "@/features/routines/queries";
 import { useCompleteRoutine, useUncompleteRoutine, useDeleteRoutine, useSkipRoutine, useUnskipRoutine, useReorderRoutines } from "@/features/routines/queries";
 import { useToast } from "@/hooks/use-toast";
-import { ToastHost } from "@/components/layout/Toast";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
 import { ProgressSummary } from "@/components/dashboard/ProgressSummary";
 import { CategoryGroup } from "@/components/dashboard/CategoryGroup";
@@ -37,7 +36,7 @@ export function DashboardPage() {
   const skip = useSkipRoutine();
   const unskip = useUnskipRoutine();
   const reorder = useReorderRoutines();
-  const { toasts, show, dismiss } = useToast();
+  const { show } = useToast();
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [adding, setAdding] = useState(false);
@@ -238,8 +237,7 @@ export function DashboardPage() {
         </>
       )}
 
-      <ToastHost toasts={toasts} onDismiss={dismiss} />
-
+      
       <QuickAdd open={adding} onClose={() => setAdding(false)} />
       <QuickAdd open={editing !== null} routine={editing} onClose={() => setEditing(null)} />
 

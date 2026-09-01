@@ -1,12 +1,7 @@
-import { useToast } from "@/hooks/use-toast";
+import { dismissToast, useToasts } from "@/hooks/use-toast";
 
-export function ToastHost({
-  toasts,
-  onDismiss,
-}: {
-  toasts: ReturnType<typeof useToast>["toasts"];
-  onDismiss: (id: number) => void;
-}) {
+export function ToastHost() {
+  const toasts = useToasts();
   if (toasts.length === 0) return null;
   return (
     <div className="fixed right-4 top-4 z-[60] flex w-full max-w-sm flex-col gap-2">
@@ -23,7 +18,7 @@ export function ToastHost({
                 className="shrink-0 text-sm font-semibold text-accent"
                 onClick={() => {
                   t.onAction?.();
-                  onDismiss(t.id);
+                  dismissToast(t.id);
                 }}
               >
                 {t.actionLabel}
@@ -33,7 +28,7 @@ export function ToastHost({
           <div className="h-0.5 w-full bg-accent/15">
             <div
               className="h-full origin-left bg-accent [animation:toast-countdown_3s_linear_forwards]"
-              onAnimationEnd={() => onDismiss(t.id)}
+              onAnimationEnd={() => dismissToast(t.id)}
             />
           </div>
         </div>

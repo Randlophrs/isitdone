@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface Toast {
   id: number;
@@ -8,29 +8,44 @@ export interface Toast {
 }
 
 let counter = 0;
+// ponytail: module-level store so any page can show toasts without
+// remounting the host. Single source for ToastHost at app shell.
+let toasts: Toast[] = [];
+const listeners = new Set<(t: Toast[]) => void>();
 
-export function useToast() {
-  const [toasts, setToasts] = useState<Toast[]>([]);
+function emit() {
+  for (const l of listeners) l(toasts);
+}
 
-  const dismiss = useCallback((id: number) => {
-    setToasts((t) => t.filter((x) => x.id !== id));
+export function showToast(
+  message: string,
+  opts?: { actionLabel?: string; onAction?: () => void },
+) {
+  const id = ++counter;
+  toasts = [...toasts, { id, message, actionLabel: opts?.actionLabel, onAction: opts?.onAction }].slice(-3);
+  emit();
+  setTimeout(() => dismissToast(id), 3000);
+}
+
+export function dismissToast(id: number) {
+  const next = toasts.filter((x) => x.id !== id);
+  if (next.length === toasts.length) return;
+  toasts = next;
+  emit();
+}
+
+export function useToasts() {
+  const [t, setT] = useState<Toast[]>(toasts);
+  useEffect(() => {
+    listeners.add(setT);
+    return () => {
+      listeners.delete(setT);
+    };
   }, []);
+  return t;
+}
 
-  const show = useCallback(
-    (message: string, opts?: { actionLabel?: string; onAction?: () => void }) => {
-      const id = ++counter;
-      setToasts((t) => {
-        const next = [
-          ...t,
-          { id, message, actionLabel: opts?.actionLabel, onAction: opts?.onAction },
-        ];
-        // ponytail: keep latest 3 only, FIFO drop
-        return next.slice(-3);
-      });
-      setTimeout(() => dismiss(id), 3000);
-    },
-    [dismiss],
-  );
-
-  return { toasts, show, dismiss };
+// ponytail: kept for back-compat with existing DashboardPage callers.
+export function useToast() {
+  return { toasts: useToasts(), show: showToast, dismiss: dismissToast };
 }

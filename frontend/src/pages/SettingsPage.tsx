@@ -16,6 +16,7 @@ import {
   setRemindersEnabled,
 } from "@/lib/reminders";
 import { Bell, Trash2, Upload } from "lucide-react";
+import { showToast } from "@/hooks/use-toast";
 
 export function SettingsPage() {
   const { theme, toggle } = useTheme();
@@ -46,7 +47,6 @@ export function SettingsPage() {
   const wipeMut = useWipeAll();
   const fileRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<"merge" | "replace" | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [pickedFile, setPickedFile] = useState<File | null>(null);
   const [wipeOpen, setWipeOpen] = useState(false);
@@ -57,12 +57,12 @@ export function SettingsPage() {
       { file: pickedFile, mode },
       {
         onSuccess: (r) => {
-          setMsg(`Imported ${r.imported.routines} routines (${mode}).`);
+          showToast(`Imported ${r.imported.routines} routines (${mode}).`);
           setImportOpen(false);
           setPickedFile(null);
         },
         onError: (err) => {
-          setMsg(`Import failed: ${String(err)}`);
+          showToast(`Import failed: ${String(err)}`);
         },
       },
     );
@@ -71,10 +71,10 @@ export function SettingsPage() {
   function onWipeConfirm() {
     wipeMut.mutate(undefined, {
       onSuccess: () => {
-        setMsg("All data wiped.");
+        showToast("All data wiped.");
         setWipeOpen(false);
       },
-      onError: (err) => setMsg(`Wipe failed: ${String(err)}`),
+      onError: (err) => showToast(`Wipe failed: ${String(err)}`),
     });
   }
 
@@ -85,10 +85,6 @@ export function SettingsPage() {
       </header>
 
       <ConnectionStatus />
-
-      {msg && (
-        <div className="card p-3 text-sm text-muted">{msg}</div>
-      )}
 
       <section className="card divide-y divide-border">
         <div className="p-4">
