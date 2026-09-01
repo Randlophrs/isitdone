@@ -15,7 +15,7 @@ import {
   setReminderTime,
   setRemindersEnabled,
 } from "@/lib/reminders";
-import { Bell, Trash2 } from "lucide-react";
+import { Bell, Trash2, Upload } from "lucide-react";
 
 export function SettingsPage() {
   const { theme, toggle } = useTheme();
@@ -45,22 +45,27 @@ export function SettingsPage() {
   const importMut = useImportBackup();
   const wipeMut = useWipeAll();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [mode, setMode] = useState<"merge" | "replace">("merge");
+  const [mode, setMode] = useState<"merge" | "replace" | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [pickedFile, setPickedFile] = useState<File | null>(null);
   const [wipeOpen, setWipeOpen] = useState(false);
 
-  function onImport(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function onImport() {
+    if (!pickedFile || !mode) return;
     importMut.mutate(
-      { file, mode },
+      { file: pickedFile, mode },
       {
-        onSuccess: (r) =>
-          setMsg(`Imported ${r.imported.routines} routines (${mode}).`),
-        onError: (err) => setMsg(`Import failed: ${String(err)}`),
+        onSuccess: (r) => {
+          setMsg(`Imported ${r.imported.routines} routines (${mode}).`);
+          setImportOpen(false);
+          setPickedFile(null);
+        },
+        onError: (err) => {
+          setMsg(`Import failed: ${String(err)}`);
+        },
       },
     );
-    e.target.value = "";
   }
 
   function onWipeConfirm() {
@@ -157,39 +162,32 @@ export function SettingsPage() {
         <div className="p-4">
           <p className="font-medium">Import backup</p>
           <p className="mb-2 text-xs text-muted">
-            Merge adds to current data. Replace clears first.
+            Restore from a JSON file. Pick the mode carefully — Replace clears
+            current data first.
           </p>
-          <div className="mb-2 flex gap-2 text-xs">
-            {(["merge", "replace"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={cx(
-                  "flex-1 rounded-lg border px-2 py-1.5 capitalize transition-colors",
-                  mode === m
-                    ? "border-accent bg-accent/10 text-accent"
-                    : "border-border text-muted",
-                )}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/json"
-            className="hidden"
-            onChange={onImport}
-          />
           <button
             className="btn-accent"
-            onClick={() => fileRef.current?.click()}
-            disabled={importMut.isPending}
+            onClick={() => {
+              setMode(null);
+              setPickedFile(null);
+              setImportOpen(true);
+            }}
           >
-            Choose file
+            Import backup
           </button>
         </div>
+
+        <ImportDialog
+          open={importOpen}
+          fileRef={fileRef as React.RefObject<HTMLInputElement>}
+          mode={mode}
+          picked={pickedFile}
+          pending={importMut.isPending}
+          onClose={() => setImportOpen(false)}
+          onPickMode={setMode}
+          onPickFile={(f) => setPickedFile(f)}
+          onSubmit={onImport}
+        />
 
         <div className="border-t border-red-500/30 p-4">
           <p className="flex items-center gap-1.5 font-medium text-red-600">
@@ -221,6 +219,101 @@ export function SettingsPage() {
         device.
       </p>
     </div>
+  );
+}
+
+function ImportDialog({
+  open,
+  fileRef,
+  mode,
+  picked,
+  pending,
+  onClose,
+  onPickMode,
+  onPickFile,
+  onSubmit,
+}: {
+  open: boolean;
+  fileRef: React.RefObject<HTMLInputElement>;
+  mode: "merge" | "replace" | null;
+  picked: File | null;
+  pending: boolean;
+  onClose: () => void;
+  onPickMode: (m: "merge" | "replace") => void;
+  onPickFile: (f: File | null) => void;
+  onSubmit: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <Modal open={open} onClose={onClose} label="Import backup">
+      <div className="card w-full max-w-sm space-y-3 p-4">
+        <h2 className="text-sm font-semibold">Import backup</h2>
+        <p className="text-sm text-muted">
+          Pick a JSON file, then a mode.{" "}
+          <span className="font-medium text-red-600">Replace</span> clears your
+          current data first.
+        </p>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json"
+          className="hidden"
+          onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+        />
+        <button
+          type="button"
+          className="btn-ghost flex w-full items-center justify-center gap-1.5 border border-border"
+          onClick={() => fileRef.current?.click()}
+        >
+          <Upload size={14} />
+          {picked ? picked.name : "Choose JSON file"}
+        </button>
+        {picked && (
+          <div className="flex gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => onPickMode("merge")}
+              className={cx(
+                "flex-1 rounded-lg border px-2 py-2 capitalize transition-colors",
+                mode === "merge"
+                  ? "border-accent bg-accent/10 text-accent"
+                  : "border-border text-muted",
+              )}
+            >
+              Merge
+            </button>
+            <button
+              type="button"
+              onClick={() => onPickMode("replace")}
+              className={cx(
+                "flex-1 rounded-lg border px-2 py-2 capitalize transition-colors",
+                mode === "replace"
+                  ? "border-red-500 bg-red-500/10 text-red-600"
+                  : "border-border text-muted",
+              )}
+            >
+              Replace
+            </button>
+          </div>
+        )}
+        <div className="flex gap-2 pt-1">
+          <button type="button" className="btn-ghost flex-1" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={cx(
+              "btn-accent flex-1 disabled:opacity-40",
+              mode === "replace" && "bg-red-500 hover:bg-red-600",
+            )}
+            disabled={!mode || !picked || pending}
+            onClick={onSubmit}
+          >
+            {pending ? "Importing…" : "Import"}
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
