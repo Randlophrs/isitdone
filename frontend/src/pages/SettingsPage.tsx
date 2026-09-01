@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   useExportBackup,
   useImportBackup,
-  useRestoreSqlite,
   useWipeAll,
 } from "@/features/backup/queries";
 import { useRoutines } from "@/features/routines/queries";
@@ -44,10 +43,8 @@ export function SettingsPage() {
 
   const exportMut = useExportBackup();
   const importMut = useImportBackup();
-  const restoreMut = useRestoreSqlite();
   const wipeMut = useWipeAll();
   const fileRef = useRef<HTMLInputElement>(null);
-  const sqliteRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<"merge" | "replace">("merge");
   const [msg, setMsg] = useState<string | null>(null);
   const [wipeOpen, setWipeOpen] = useState(false);
@@ -63,16 +60,6 @@ export function SettingsPage() {
         onError: (err) => setMsg(`Import failed: ${String(err)}`),
       },
     );
-    e.target.value = "";
-  }
-
-  function onRestore(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    restoreMut.mutate(file, {
-      onSuccess: () => setMsg("Database restored."),
-      onError: (err) => setMsg(`Restore failed: ${String(err)}`),
-    });
     e.target.value = "";
   }
 
@@ -201,33 +188,6 @@ export function SettingsPage() {
             disabled={importMut.isPending}
           >
             Choose file
-          </button>
-        </div>
-
-        <div className="p-4">
-          <p className="font-medium">Database backup</p>
-          <p className="mb-2 text-xs text-muted">
-            Copy the SQLite file, or restore from one.
-          </p>
-          <button
-            className="btn-ghost border border-border"
-            onClick={() => alert("Use the backend API to copy the .sqlite file from your data directory.")}
-          >
-            Copy database
-          </button>
-          <input
-            ref={sqliteRef}
-            type="file"
-            accept=".sqlite"
-            className="hidden"
-            onChange={onRestore}
-          />
-          <button
-            className="btn-ghost border border-border ml-2"
-            onClick={() => sqliteRef.current?.click()}
-            disabled={restoreMut.isPending}
-          >
-            Restore database
           </button>
         </div>
 
