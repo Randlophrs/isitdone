@@ -16,7 +16,6 @@ import { StatisticsPage } from "@/pages/StatisticsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { GridSweep } from "@/components/layout/GridSweep";
 import { ToastHost } from "@/components/layout/Toast";
-import { useReminders } from "@/hooks/use-reminders";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -35,7 +34,6 @@ export default function App() {
 
 function Shell() {
   const { theme, toggle } = useTheme();
-  useReminders();
 
   return (
     <>
